@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel &mdash; Shree Navajagriti Chandi School</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar">
+        <h2>🏫 Shree Navajagriti<br>Chandi School</h2>
+        <ul class="nav-menu">
+            <li><a href="#" class="nav-link active" data-section="dashboard">Dashboard</a></li>
+            <li><a href="#" class="nav-link" data-section="students">Students</a></li>
+            <li><a href="#" class="nav-link" data-section="teachers">Teachers</a></li>
+            <li><a href="#" class="nav-link" data-section="classes">Classes</a></li>
+            <li><a href="#" class="nav-link" data-section="attendance">Attendance</a></li>
+            <li><a href="#" class="nav-link" data-section="fees">Fees</a></li>
+            <li><a href="#" class="nav-link" data-section="results">Results</a></li>
+            <li><a href="#" class="nav-link" data-section="account">My Account</a></li>
+            <li id="nav-admins-item" style="display:none;"><a href="#" class="nav-link" data-section="admins">Admin Users</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>School Admin Panel</h1>
+            <div class="header-actions">
+                <a href="index.html" class="home-link">Back to Home</a>
+                <button onclick="logout()" class="logout-btn">Logout</button>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <section id="dashboard" class="section active">
+            <h2>Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="card"><h3>Total Students</h3><div class="card-value" id="d-students">—</div></div>
+                <div class="card"><h3>Total Teachers</h3><div class="card-value" id="d-teachers">—</div></div>
+                <div class="card"><h3>Total Classes</h3><div class="card-value" id="d-classes">—</div></div>
+                <div class="card"><h3>Pending Fees</h3><div class="card-value" id="d-fees">—</div></div>
+            </div>
+        </section>
+
+        <!-- Students -->
+        <section id="students" class="section">
+            <h2>Manage Students</h2>
+            <form id="form-students">
+                <div class="form-row">
+                    <div class="form-group"><label>Roll Number</label><input type="text" id="s-roll" required></div>
+                    <div class="form-group"><label>Student Name</label><input type="text" id="s-name" required></div>
+                    <div class="form-group">
+                        <label>Class</label>
+                        <select id="s-class" required>
+                            <option value="">Select Class</option>
+                            <option>Class 1</option><option>Class 2</option><option>Class 3</option>
+                            <option>Class 4</option><option>Class 5</option><option>Class 6</option>
+                            <option>Class 7</option><option>Class 8</option><option>Class 9</option>
+                            <option>Class 10</option><option>Class 11</option><option>Class 12</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Email</label><input type="email" id="s-email"></div>
+                </div>
+                <button type="submit" class="btn-submit">Add Student</button>
+            </form>
+            <table>
+                <thead><tr><th>Roll No</th><th>Name</th><th>Class</th><th>Email</th><th>Action</th></tr></thead>
+                <tbody id="tbl-students"></tbody>
+            </table>
+        </section>
+
+        <!-- Teachers -->
+        <section id="teachers" class="section">
+            <h2>Manage Teachers</h2>
+            <form id="form-teachers">
+                <div class="form-row">
+                    <div class="form-group"><label>Teacher Name</label><input type="text" id="t-name" required></div>
+                    <div class="form-group"><label>Subject</label><input type="text" id="t-subject" required></div>
+                    <div class="form-group"><label>Email</label><input type="email" id="t-email"></div>
+                </div>
+                <button type="submit" class="btn-submit">Add Teacher</button>
+            </form>
+            <table>
+                <thead><tr><th>Name</th><th>Subject</th><th>Email</th><th>Action</th></tr></thead>
+                <tbody id="tbl-teachers"></tbody>
+            </table>
+        </section>
+
+        <!-- Classes -->
+        <section id="classes" class="section">
+            <h2>Manage Classes</h2>
+            <form id="form-classes">
+                <div class="form-row">
+                    <div class="form-group"><label>Class Name</label><input type="text" id="cl-name" required></div>
+                    <div class="form-group"><label>Class Teacher</label><input type="text" id="cl-teacher"></div>
+                    <div class="form-group"><label>Number of Students</label><input type="number" id="cl-count" value="0"></div>
+                </div>
+                <button type="submit" class="btn-submit">Add Class</button>
+            </form>
+            <table>
+                <thead><tr><th>Class Name</th><th>Teacher</th><th>Students</th><th>Action</th></tr></thead>
+                <tbody id="tbl-classes"></tbody>
+            </table>
+        </section>
+
+        <!-- Attendance -->
+        <section id="attendance" class="section">
+            <h2>Manage Attendance</h2>
+            <form id="form-attendance">
+                <div class="form-row">
+                    <div class="form-group"><label>Class</label><input type="text" id="a-class" required placeholder="e.g. Class 10 A"></div>
+                    <div class="form-group"><label>Date</label><input type="date" id="a-date" required></div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="a-status">
+                            <option>Present</option>
+                            <option>Absent</option>
+                            <option>Holiday</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Mark Attendance</button>
+            </form>
+            <table>
+                <thead><tr><th>Class</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="tbl-attendance"></tbody>
+            </table>
+        </section>
+
+        <!-- Fees -->
+        <section id="fees" class="section">
+            <h2>Manage Fees</h2>
+            <form id="form-fees">
+                <div class="form-row">
+                    <div class="form-group"><label>Student Name</label><input type="text" id="f-name" required></div>
+                    <div class="form-group"><label>Amount</label><input type="number" id="f-amount" required></div>
+                    <div class="form-group"><label>Due Date</label><input type="date" id="f-due"></div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="f-status">
+                            <option>Pending</option>
+                            <option>Paid</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Add Fee Record</button>
+            </form>
+            <table>
+                <thead><tr><th>Student Name</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="tbl-fees"></tbody>
+            </table>
+        </section>
+
+        <!-- Results -->
+        <section id="results" class="section">
+            <h2>Manage Results</h2>
+            <form id="form-results">
+                <div class="form-row">
+                    <div class="form-group"><label>Student Name</label><input type="text" id="r-name" required></div>
+                    <div class="form-group"><label>Subject</label><input type="text" id="r-subject" required></div>
+                    <div class="form-group"><label>Marks</label><input type="number" id="r-marks" min="0" max="100" required></div>
+                </div>
+                <button type="submit" class="btn-submit">Add Result</button>
+            </form>
+            <table>
+                <thead><tr><th>Student Name</th><th>Subject</th><th>Marks</th><th>Action</th></tr></thead>
+                <tbody id="tbl-results"></tbody>
+            </table>
+        </section>
+        <!-- My Account (change password) -->
+        <section id="account" class="section">
+            <h2>My Account</h2>
+            <p style="color:#5b6255; margin-bottom:1.2rem; font-size:.9rem;">
+                Logged in as <strong id="acct-username"></strong>. Update your own password below.
+            </p>
+            <form id="form-change-password" style="max-width:420px;">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="cp-current" required>
+                </div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="cp-new" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="cp-confirm" required minlength="6">
+                </div>
+                <button type="submit" class="btn-submit">Update Password</button>
+            </form>
+        </section>
+
+        <!-- Admin Users (owner only) -->
+        <section id="admins" class="section">
+            <h2>Admin Users</h2>
+            <p style="color:#5b6255; margin-bottom:1.2rem; font-size:.9rem;">
+                Create a separate login for your accountant or any authorized teacher instead of sharing one password. Only an owner account can access this page.
+            </p>
+            <form id="form-admins">
+                <div class="form-row">
+                    <div class="form-group"><label>Full Name</label><input type="text" id="au-fullname" placeholder="e.g. Sita Sharma"></div>
+                    <div class="form-group"><label>Username</label><input type="text" id="au-username" required></div>
+                    <div class="form-group"><label>Password</label><input type="password" id="au-password" required minlength="6"></div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="au-role">
+                            <option value="staff">Staff (accountant / teacher)</option>
+                            <option value="owner">Owner (full control)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Create Login</button>
+            </form>
+            <table>
+                <thead><tr><th>Full Name</th><th>Username</th><th>Role</th><th>Action</th></tr></thead>
+                <tbody id="tbl-admins"></tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/admin-dashboard.js"></script>
+</body>
+</html>
