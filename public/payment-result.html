@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Result &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/site.css">
+<style>
+    .result-wrap { max-width: 480px; margin: 4rem auto; padding: 2.5rem; text-align: center; background:#fff; border-radius: 12px; border: 1px solid var(--line); }
+    .icon { font-size: 3rem; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+    <div class="brand"><span class="emblem">SN</span> Shree Navajagriti Chandi School</div>
+    <ul><li><a href="index.html">Home</a></li></ul>
+</nav>
+
+<div class="result-wrap" id="result-box">
+    <div class="icon" id="result-icon">⏳</div>
+    <h2 id="result-title">Checking your payment...</h2>
+    <p id="result-desc" style="color:#5b6255; margin-top:.6rem;"></p>
+    <a href="pay.html" class="btn" style="margin-top:1.5rem; display:inline-block;">Back to Payments</a>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const ref = params.get('ref');
+
+    const icon = document.getElementById('result-icon');
+    const title = document.getElementById('result-title');
+    const desc = document.getElementById('result-desc');
+
+    if (status === 'success') {
+        icon.textContent = '✅';
+        title.textContent = 'Payment Successful';
+        desc.textContent = ref ? `Reference: ${ref}. Thank you!` : 'Thank you for your payment.';
+    } else {
+        icon.textContent = '❌';
+        title.textContent = 'Payment Not Completed';
+        desc.textContent = 'The payment was cancelled or failed. No amount has been charged. You can try again.';
+    }
+</script>
+</body>
+</html>

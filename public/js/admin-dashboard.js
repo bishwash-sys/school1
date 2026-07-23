@@ -33,6 +33,65 @@ async function apiRequest(url, options) {
     return data;
 }
 
+wireResource({
+    resource: 'homework',
+    tbodyId: 'tbl-homework',
+    formId: 'form-homework',
+    colspan: 5,
+    successMsg: 'Homework posted.',
+    fields: [
+        { inputId: 'hw-class', key: 'class' },
+        { inputId: 'hw-subject', key: 'subject' },
+        { inputId: 'hw-title', key: 'title' },
+        { inputId: 'hw-description', key: 'description' },
+        { inputId: 'hw-due', key: 'due_date' }
+    ],
+    render: row => `<tr>
+        <td>${row.class}</td><td>${row.subject || ''}</td><td>${row.title}</td><td>${row.due_date || ''}</td>
+        <td><button class="btn-delete" data-id="${row.id}">Delete</button></td>
+    </tr>`
+});
+
+wireResource({
+    resource: 'student-accounts',
+    tbodyId: 'tbl-student-accounts',
+    formId: 'form-student-accounts',
+    colspan: 4,
+    successMsg: 'Student login created.',
+    fields: [
+        { inputId: 'sa-name', key: 'student_name' },
+        { inputId: 'sa-class', key: 'class' },
+        { inputId: 'sa-username', key: 'username' },
+        { inputId: 'sa-password', key: 'password' },
+        { inputId: 'sa-email', key: 'email' }
+    ],
+    render: row => `<tr>
+        <td>${row.student_name}</td><td>${row.class || ''}</td><td>${row.username}</td>
+        <td><button class="btn-delete" data-id="${row.id}">Delete</button></td>
+    </tr>`
+});
+
+// ---------- Payments ledger (view only) ----------
+function loadPayments() {
+    apiRequest('/api/payments').then(rows => {
+        const tbody = document.getElementById('tbl-payments');
+        if (!rows.length) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No payments yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = rows.map(r => `<tr>
+            <td>${(r.created_at || '').slice(0, 16).replace('T', ' ')}</td>
+            <td>${r.purpose === 'donation' ? 'Donation' : 'School Fee'}</td>
+            <td>${r.payer_name || ''}${r.payer_email ? ' (' + r.payer_email + ')' : ''}</td>
+            <td>${r.student_name || '—'}</td>
+            <td>NPR ${r.amount}</td>
+            <td>${r.method}</td>
+            <td>${r.status}</td>
+        </tr>`).join('');
+    }).catch(() => {});
+}
+loadPayments();
+
 // ---------- My Account: change password ----------
 document.getElementById('acct-username').textContent = sessionStorage.getItem('adminUsername') || '';
 

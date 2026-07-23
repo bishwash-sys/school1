@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Make a Payment &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/site.css">
+<style>
+    .pay-wrap { max-width: 520px; margin: 0 auto; padding: 3rem 1.5rem; }
+    .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; margin: 1rem 0 1.5rem; }
+    .method-card {
+        border: 2px solid var(--line);
+        border-radius: 10px;
+        padding: 1rem .5rem;
+        text-align: center;
+        cursor: pointer;
+        background: #fff;
+        font-weight: 600;
+        font-size: .9rem;
+        color: var(--ink);
+    }
+    .method-card.selected { border-color: var(--forest); background: #eef4ee; }
+    .purpose-toggle { display: flex; gap: .6rem; margin-bottom: 1.2rem; }
+    .purpose-toggle button {
+        flex: 1;
+        padding: .7rem;
+        border: 2px solid var(--line);
+        background: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--ink);
+    }
+    .purpose-toggle button.selected { border-color: var(--marigold); background: #fdf3e0; }
+    #student-field { display: none; }
+    .error-msg { background:#fbeae7; color:#B4432F; padding:.6rem .8rem; border-radius:6px; font-size:.85rem; margin-bottom:1rem; display:none; }
+    .error-msg.show { display: block; }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+    <div class="brand"><span class="emblem">SN</span> Shree Navajagriti Chandi School</div>
+    <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+    </ul>
+</nav>
+
+<div class="pay-wrap">
+    <div class="form-box">
+        <h2 style="margin-bottom:.3rem;">Make a Payment</h2>
+        <p style="color:#5b6255; margin-bottom:1.5rem; font-size:.92rem;">Pay school fees or support the school with a donation.</p>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <div class="purpose-toggle">
+            <button type="button" class="selected" data-purpose="fee">School Fee</button>
+            <button type="button" data-purpose="donation">Donation</button>
+        </div>
+
+        <form id="payForm">
+            <div class="form-group" id="student-field">
+                <label>Student Name</label>
+                <input type="text" id="p-student">
+            </div>
+            <div class="form-group">
+                <label>Your Name</label>
+                <input type="text" id="p-name" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="p-email" required>
+            </div>
+            <div class="form-group">
+                <label>Amount (NPR)</label>
+                <input type="number" id="p-amount" min="1" required>
+            </div>
+
+            <label style="margin-bottom:.5rem; display:block;">Payment Method</label>
+            <div class="method-grid">
+                <div class="method-card selected" data-method="esewa">eSewa</div>
+                <div class="method-card" data-method="khalti">Khalti</div>
+                <div class="method-card" data-method="stripe">Card</div>
+            </div>
+
+            <button type="submit" class="btn" style="width:100%;">Proceed to Pay</button>
+        </form>
+    </div>
+</div>
+
+<footer>
+    <p><strong>Shree Navajagriti Chandi School</strong></p>
+    <p>Secure payments via eSewa, Khalti, and card (Stripe)</p>
+</footer>
+
+<!-- Hidden form used only to submit eSewa's signed POST request -->
+<form id="esewaForm" method="POST" style="display:none;"></form>
+
+<script src="js/pay.js"></script>
+</body>
+</html>

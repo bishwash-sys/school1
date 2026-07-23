@@ -10,6 +10,31 @@ A full school website with a working database-backed admin panel.
 - **Admin dashboard** (`public/admin-dashboard.html`) — manage Students, Teachers, Classes, Attendance, Fees, and Results. Every add/delete goes straight to the SQLite database through the API.
 - **Backend** (`server.js`) — REST API (`/api/...`) with session-token auth. No page can read/write data without a valid login token.
 
+## Payments (fees + donations)
+The public **Pay Fees / Donate** page (`public/pay.html`) accepts payments via **eSewa**, **Khalti**, and **cards (Stripe)**. Every payment attempt is logged in the `payments` table and visible to admins under **Payments** in the dashboard.
+
+### Setup
+1. Copy `.env.example` to a new file named `.env`.
+2. **eSewa** — already works out of the box using eSewa's published public **test** credentials (safe for sandbox testing, not real money).
+3. **Khalti** — sign up for a free sandbox account at https://test-admin.khalti.com, copy your secret key, and set `KHALTI_SECRET_KEY` in `.env`.
+4. **Stripe (cards)** — sign up free at https://dashboard.stripe.com, copy your **test** secret key (starts with `sk_test_...`), and set `STRIPE_SECRET_KEY` in `.env`.
+5. Restart the server after editing `.env`.
+
+### Going live with real money
+Each provider requires you to register an actual verified merchant account before it will process real payments (this is standard for any payment gateway, not specific to this code):
+- **eSewa** — apply for a merchant account at https://merchant.esewa.com.np, then replace `ESEWA_GATEWAY_URL`, `ESEWA_STATUS_URL`, `ESEWA_PRODUCT_CODE`, and `ESEWA_SECRET_KEY` in `.env` with your production values.
+- **Khalti** — after successful sandbox testing, apply for a live merchant account at https://khalti.com, then swap in your live secret key and change `KHALTI_BASE_URL` to `https://khalti.com/api/v2`.
+- **Stripe** — activate your account (business details + bank account) in the Stripe dashboard, then swap in your live secret key (starts with `sk_live_...`).
+
+No code changes are needed to go live — only the `.env` values change.
+
+## Homework & Student Accounts
+Students get their own separate login — completely walled off from the admin panel.
+
+- **Admin side:** in the dashboard, **Homework** lets any admin/staff post homework per class. **Student Accounts** lets you create a username/password for each student (give these to students directly — there's no self-signup).
+- **Student side:** students log in at `student-login.html`, and land on `student-dashboard.html`, where they see only their own class's homework, plus a **Pay Fees** button that jumps straight to the payment page with their name pre-filled.
+- **Security:** student logins and admin logins use entirely separate session types — a student's login token is rejected by every admin API route, and an admin's token is rejected by every student API route. Tested and verified.
+
 ## Default admin login (owner account)
 ```
 username: admin

@@ -1,6 +1,7 @@
 // Shree Navajagriti Chandi School - Backend Server
 // Node.js + Express + SQLite (better-sqlite3)
 
+require('dotenv').config({ quiet: true });
 const express = require('express');
 const path = require('path');
 const bcrypt = require('bcryptjs');
@@ -10,6 +11,19 @@ const Database = require('better-sqlite3');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'data', 'school.db');
+const SITE_URL = process.env.SITE_URL || `http://localhost:${PORT}`;
+
+// ---------- Payment provider config (sandbox defaults; swap via .env for production) ----------
+const ESEWA_GATEWAY_URL = process.env.ESEWA_GATEWAY_URL || 'https://rc-epay.esewa.com.np/api/epay/main/v2/form';
+const ESEWA_STATUS_URL = process.env.ESEWA_STATUS_URL || 'https://rc.esewa.com.np/api/epay/transaction/status/';
+const ESEWA_PRODUCT_CODE = process.env.ESEWA_PRODUCT_CODE || 'EPAYTEST';
+const ESEWA_SECRET_KEY = process.env.ESEWA_SECRET_KEY || '8gBm/:&EnhH.1/q';
+
+const KHALTI_BASE_URL = process.env.KHALTI_BASE_URL || 'https://dev.khalti.com/api/v2';
+const KHALTI_SECRET_KEY = process.env.KHALTI_SECRET_KEY || ''; // you must get your own sandbox key from test-admin.khalti.com
+
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || ''; // you must get your own test key from dashboard.stripe.com
+const stripe = STRIPE_SECRET_KEY ? require('stripe')(STRIPE_SECRET_KEY) : null;
 
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
@@ -76,6 +90,39 @@ CREATE TABLE IF NOT EXISTS messages (
     message TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference TEXT UNIQUE NOT NULL,
+    purpose TEXT NOT NULL,
+    payer_name TEXT,
+    payer_email TEXT,
+    student_name TEXT,
+    amount REAL NOT NULL,
+    method TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    provider_ref TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS homework (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class TEXT NOT NULL,
+    subject TEXT,
+    title TEXT NOT NULL,
+    description TEXT,
+    due_date TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS student_logins (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    student_name TEXT NOT NULL,
+    class TEXT,
+    email TEXT
+);
 `);
 
 // Seed a default admin account if none exists yet.
@@ -121,7 +168,7 @@ function requireAuth(req, res, next) {
     const auth = req.headers['authorization'] || '';
     const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
     const session = token && sessions.get(token);
-    if (!session || session.expires < Date.now()) {
+    if (!session || session.expires < Date.now() || session.type !== 'admin') {
         if (token) sessions.delete(token);
         return res.status(401).json({ error: 'Not authenticated. Please log in again.' });
     }
@@ -139,6 +186,21 @@ function requireOwner(req, res, next) {
     next();
 }
 
+// Student sessions are kept completely separate from admin sessions —
+// a student token can never pass requireAuth, and an admin token can never pass requireStudentAuth.
+function requireStudentAuth(req, res, next) {
+    const auth = req.headers['authorization'] || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+    const session = token && sessions.get(token);
+    if (!session || session.expires < Date.now() || session.type !== 'student') {
+        if (token) sessions.delete(token);
+        return res.status(401).json({ error: 'Not authenticated. Please log in again.' });
+    }
+    session.expires = Date.now() + SESSION_TTL_MS;
+    req.student = { username: session.username, name: session.studentName, class: session.studentClass };
+    next();
+}
+
 // ---------- Auth routes ----------
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body || {};
@@ -150,8 +212,42 @@ app.post('/api/login', (req, res) => {
         return res.status(401).json({ error: 'Invalid username or password.' });
     }
     const token = makeToken();
-    sessions.set(token, { username, role: row.role, expires: Date.now() + SESSION_TTL_MS });
+    sessions.set(token, { username, role: row.role, type: 'admin', expires: Date.now() + SESSION_TTL_MS });
     res.json({ token, username, role: row.role, fullName: row.full_name });
+});
+
+// ---------- Student auth routes ----------
+app.post('/api/student-login', (req, res) => {
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Username and password are required.' });
+    }
+    const row = db.prepare('SELECT * FROM student_logins WHERE username = ?').get(username);
+    if (!row || !bcrypt.compareSync(password, row.password_hash)) {
+        return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+    const token = makeToken();
+    sessions.set(token, {
+        username, type: 'student', studentName: row.student_name, studentClass: row.class,
+        expires: Date.now() + SESSION_TTL_MS
+    });
+    res.json({ token, username, studentName: row.student_name, class: row.class });
+});
+
+app.post('/api/student-logout', requireStudentAuth, (req, res) => {
+    const auth = req.headers['authorization'] || '';
+    sessions.delete(auth.slice(7));
+    res.json({ ok: true });
+});
+
+// The logged-in student's own homework, filtered to their class only
+app.get('/api/student/homework', requireStudentAuth, (req, res) => {
+    const rows = db.prepare('SELECT * FROM homework WHERE class = ? ORDER BY id DESC').all(req.student.class);
+    res.json(rows);
+});
+
+app.get('/api/student/me', requireStudentAuth, (req, res) => {
+    res.json(req.student);
 });
 
 app.post('/api/logout', requireAuth, (req, res) => {
@@ -267,6 +363,36 @@ registerCrud('classes', 'classes', ['name', 'teacher', 'students_count']);
 registerCrud('attendance', 'attendance', ['class', 'date', 'status']);
 registerCrud('fees', 'fees', ['student_name', 'amount', 'due_date', 'status']);
 registerCrud('results', 'results', ['student_name', 'subject', 'marks']);
+registerCrud('homework', 'homework', ['class', 'subject', 'title', 'description', 'due_date']);
+
+// ---------- Student account management (any logged-in admin/staff can do this) ----------
+app.get('/api/student-accounts', requireAuth, (req, res) => {
+    const rows = db.prepare('SELECT id, username, student_name, class, email FROM student_logins ORDER BY id DESC').all();
+    res.json(rows);
+});
+
+app.post('/api/student-accounts', requireAuth, (req, res) => {
+    const { username, password, student_name, class: className, email } = req.body || {};
+    if (!username || !password || !student_name) {
+        return res.status(400).json({ error: 'Username, password, and student name are required.' });
+    }
+    if (password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+    }
+    const existing = db.prepare('SELECT id FROM student_logins WHERE username = ?').get(username);
+    if (existing) return res.status(409).json({ error: 'That username is already taken.' });
+
+    const hash = bcrypt.hashSync(password, 10);
+    const info = db.prepare('INSERT INTO student_logins (username, password_hash, student_name, class, email) VALUES (?,?,?,?,?)')
+        .run(username, hash, student_name, className || '', email || '');
+    const row = db.prepare('SELECT id, username, student_name, class, email FROM student_logins WHERE id = ?').get(info.lastInsertRowid);
+    res.status(201).json(row);
+});
+
+app.delete('/api/student-accounts/:id', requireAuth, (req, res) => {
+    db.prepare('DELETE FROM student_logins WHERE id = ?').run(req.params.id);
+    res.json({ ok: true });
+});
 
 // ---------- Public contact form (no auth needed) ----------
 app.post('/api/contact', (req, res) => {
@@ -277,6 +403,190 @@ app.post('/api/contact', (req, res) => {
     db.prepare('INSERT INTO messages (name, email, subject, message) VALUES (?,?,?,?)')
       .run(name, email, subject || '', message);
     res.status(201).json({ ok: true });
+});
+
+// ==========================================================
+// PAYMENTS — eSewa, Khalti, and Stripe (cards)
+// Covers both fee payments and donations.
+// ==========================================================
+
+function newReference() {
+    return 'PAY-' + Date.now() + '-' + crypto.randomBytes(4).toString('hex');
+}
+
+function recordPayment({ reference, purpose, payer_name, payer_email, student_name, amount, method }) {
+    db.prepare(`INSERT INTO payments (reference, purpose, payer_name, payer_email, student_name, amount, method, status)
+                VALUES (?,?,?,?,?,?,?,'pending')`)
+      .run(reference, purpose, payer_name || '', payer_email || '', student_name || '', amount, method);
+}
+
+function markPayment(reference, status, providerRef) {
+    db.prepare('UPDATE payments SET status = ?, provider_ref = ? WHERE reference = ?')
+      .run(status, providerRef || null, reference);
+}
+
+// ---------- List payments (admin only) ----------
+app.get('/api/payments', requireAuth, (req, res) => {
+    res.json(db.prepare('SELECT * FROM payments ORDER BY id DESC').all());
+});
+
+// ---------- 1) eSewa ----------
+// eSewa v2 works by redirecting the browser to eSewa with a signed form.
+app.post('/api/payments/esewa/initiate', (req, res) => {
+    const { purpose, payer_name, payer_email, student_name, amount } = req.body || {};
+    const amt = Number(amount);
+    if (!amt || amt <= 0) return res.status(400).json({ error: 'A valid amount is required.' });
+
+    const reference = newReference();
+    recordPayment({ reference, purpose, payer_name, payer_email, student_name, amount: amt, method: 'esewa' });
+
+    const total_amount = amt;
+    const signedString = `total_amount=${total_amount},transaction_uuid=${reference},product_code=${ESEWA_PRODUCT_CODE}`;
+    const signature = crypto.createHmac('sha256', ESEWA_SECRET_KEY).update(signedString).digest('base64');
+
+    res.json({
+        gatewayUrl: ESEWA_GATEWAY_URL,
+        fields: {
+            amount: amt,
+            tax_amount: 0,
+            total_amount,
+            transaction_uuid: reference,
+            product_code: ESEWA_PRODUCT_CODE,
+            product_service_charge: 0,
+            product_delivery_charge: 0,
+            success_url: `${SITE_URL}/api/payments/esewa/callback`,
+            failure_url: `${SITE_URL}/payment-result.html?status=failed&method=esewa`,
+            signed_field_names: 'total_amount,transaction_uuid,product_code',
+            signature
+        }
+    });
+});
+
+// eSewa redirects the browser back here (GET) with a base64 "data" param
+app.get('/api/payments/esewa/callback', async (req, res) => {
+    try {
+        const decoded = JSON.parse(Buffer.from(req.query.data, 'base64').toString('utf-8'));
+        const { transaction_uuid, total_amount, status } = decoded;
+
+        // Re-verify directly with eSewa's status API (never trust the redirect alone)
+        const url = `${ESEWA_STATUS_URL}?product_code=${ESEWA_PRODUCT_CODE}&total_amount=${total_amount}&transaction_uuid=${transaction_uuid}`;
+        const verifyRes = await fetch(url);
+        const verifyData = await verifyRes.json();
+
+        if (verifyData.status === 'COMPLETE') {
+            markPayment(transaction_uuid, 'completed', decoded.transaction_code || '');
+            return res.redirect(`/payment-result.html?status=success&method=esewa&ref=${transaction_uuid}`);
+        }
+        markPayment(transaction_uuid, 'failed', '');
+        res.redirect(`/payment-result.html?status=failed&method=esewa&ref=${transaction_uuid}`);
+    } catch (err) {
+        res.redirect(`/payment-result.html?status=failed&method=esewa`);
+    }
+});
+
+// ---------- 2) Khalti ----------
+app.post('/api/payments/khalti/initiate', async (req, res) => {
+    if (!KHALTI_SECRET_KEY) {
+        return res.status(503).json({ error: 'Khalti is not configured yet. Add KHALTI_SECRET_KEY to your .env file (get a free sandbox key from test-admin.khalti.com).' });
+    }
+    const { purpose, payer_name, payer_email, student_name, amount } = req.body || {};
+    const amt = Number(amount);
+    if (!amt || amt <= 0) return res.status(400).json({ error: 'A valid amount is required.' });
+
+    const reference = newReference();
+    recordPayment({ reference, purpose, payer_name, payer_email, student_name, amount: amt, method: 'khalti' });
+
+    try {
+        const khaltiRes = await fetch(`${KHALTI_BASE_URL}/epayment/initiate/`, {
+            method: 'POST',
+            headers: { 'Authorization': `Key ${KHALTI_SECRET_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                return_url: `${SITE_URL}/api/payments/khalti/callback`,
+                website_url: SITE_URL,
+                amount: Math.round(amt * 100), // Khalti expects paisa
+                purchase_order_id: reference,
+                purchase_order_name: purpose === 'donation' ? 'Donation' : 'School Fee Payment',
+                customer_info: { name: payer_name || 'Guest', email: payer_email || 'guest@example.com' }
+            })
+        });
+        const data = await khaltiRes.json();
+        if (!khaltiRes.ok) throw new Error(data.detail || 'Khalti initiation failed.');
+        res.json({ paymentUrl: data.payment_url });
+    } catch (err) {
+        markPayment(reference, 'failed', '');
+        res.status(502).json({ error: 'Could not start Khalti payment: ' + err.message });
+    }
+});
+
+app.get('/api/payments/khalti/callback', async (req, res) => {
+    const { pidx, purchase_order_id } = req.query;
+    try {
+        const lookupRes = await fetch(`${KHALTI_BASE_URL}/epayment/lookup/`, {
+            method: 'POST',
+            headers: { 'Authorization': `Key ${KHALTI_SECRET_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pidx })
+        });
+        const data = await lookupRes.json();
+        const reference = purchase_order_id;
+        if (data.status === 'Completed') {
+            markPayment(reference, 'completed', pidx);
+            return res.redirect(`/payment-result.html?status=success&method=khalti&ref=${reference}`);
+        }
+        markPayment(reference, 'failed', pidx);
+        res.redirect(`/payment-result.html?status=failed&method=khalti&ref=${reference}`);
+    } catch (err) {
+        res.redirect('/payment-result.html?status=failed&method=khalti');
+    }
+});
+
+// ---------- 3) Stripe (international / local cards) ----------
+app.post('/api/payments/stripe/initiate', async (req, res) => {
+    if (!stripe) {
+        return res.status(503).json({ error: 'Card payments are not configured yet. Add STRIPE_SECRET_KEY to your .env file (free test key from dashboard.stripe.com).' });
+    }
+    const { purpose, payer_name, payer_email, student_name, amount } = req.body || {};
+    const amt = Number(amount);
+    if (!amt || amt <= 0) return res.status(400).json({ error: 'A valid amount is required.' });
+
+    const reference = newReference();
+    recordPayment({ reference, purpose, payer_name, payer_email, student_name, amount: amt, method: 'stripe' });
+
+    try {
+        const session = await stripe.checkout.sessions.create({
+            mode: 'payment',
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'npr',
+                    product_data: { name: purpose === 'donation' ? 'Donation to Shree Navajagriti Chandi School' : 'School Fee Payment' },
+                    unit_amount: Math.round(amt * 100)
+                },
+                quantity: 1
+            }],
+            customer_email: payer_email || undefined,
+            success_url: `${SITE_URL}/api/payments/stripe/callback?session_id={CHECKOUT_SESSION_ID}&ref=${reference}`,
+            cancel_url: `${SITE_URL}/payment-result.html?status=failed&method=stripe&ref=${reference}`
+        });
+        res.json({ paymentUrl: session.url });
+    } catch (err) {
+        markPayment(reference, 'failed', '');
+        res.status(502).json({ error: 'Could not start card payment: ' + err.message });
+    }
+});
+
+app.get('/api/payments/stripe/callback', async (req, res) => {
+    const { session_id, ref } = req.query;
+    try {
+        const session = await stripe.checkout.sessions.retrieve(session_id);
+        if (session.payment_status === 'paid') {
+            markPayment(ref, 'completed', session.id);
+            return res.redirect(`/payment-result.html?status=success&method=stripe&ref=${ref}`);
+        }
+        markPayment(ref, 'failed', session.id);
+        res.redirect(`/payment-result.html?status=failed&method=stripe&ref=${ref}`);
+    } catch (err) {
+        res.redirect('/payment-result.html?status=failed&method=stripe');
+    }
 });
 
 app.listen(PORT, () => {

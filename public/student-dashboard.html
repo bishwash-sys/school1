@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Student Dashboard &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/site.css">
+<style>
+    .dash-wrap { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+    .dash-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.8rem; flex-wrap:wrap; gap:.8rem; }
+    .dash-header h1 { color: var(--forest); font-size:1.6rem; }
+    .hw-card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:1.3rem 1.5rem; margin-bottom:1rem; }
+    .hw-card .hw-top { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:.5rem; }
+    .hw-card h3 { color: var(--forest); font-size:1.05rem; }
+    .hw-tag { background:#eef4ee; color: var(--forest); font-size:.75rem; font-weight:600; padding:.2rem .6rem; border-radius:999px; }
+    .hw-due { font-size:.82rem; color: var(--marigold-deep); font-weight:600; }
+    .hw-desc { margin-top:.5rem; color:#4b5245; font-size:.92rem; }
+    .empty-state { text-align:center; color:#8a9084; padding:2.5rem 0; }
+    .logout-link { background:#B4432F; color:#fff; border:none; padding:.55rem 1.1rem; border-radius:6px; cursor:pointer; font-size:.85rem; font-weight:600; }
+</style>
+</head>
+<body>
+
+<div class="dash-wrap">
+    <div class="dash-header">
+        <div>
+            <h1>Welcome, <span id="student-name-display">Student</span></h1>
+            <p style="color:#5b6255; font-size:.9rem;">Class: <span id="student-class-display">—</span></p>
+        </div>
+        <div style="display:flex; gap:.7rem;">
+            <a href="pay.html" id="pay-fees-link" class="btn">Pay Fees</a>
+            <button class="logout-link" onclick="studentLogout()">Logout</button>
+        </div>
+    </div>
+
+    <h2 style="color:var(--forest); font-size:1.2rem; margin-bottom:1rem;">Your Homework</h2>
+    <div id="homework-list"></div>
+</div>
+
+<script src="js/student-dashboard.js"></script>
+</body>
+</html>
