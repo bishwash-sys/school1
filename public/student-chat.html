@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Group Chat &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/site.css">
+<style>
+    .chat-wrap { max-width: 640px; margin: 0 auto; padding: 2rem 1.2rem; display: flex; flex-direction: column; height: 90vh; }
+    .chat-header { display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; }
+    .chat-header h1 { font-size: 1.3rem; color: var(--forest); }
+    .back-link { font-size: .85rem; color: var(--forest); text-decoration: none; }
+    .messages { flex: 1; overflow-y: auto; background:#fff; border:1px solid var(--line); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; display:flex; flex-direction:column; gap:.6rem; }
+    .msg { max-width: 75%; padding: .55rem .8rem; border-radius: 10px; font-size: .9rem; }
+    .msg.mine { background: var(--forest); color:#fff; align-self: flex-end; }
+    .msg.theirs { background: #eef1ec; color: var(--ink); align-self: flex-start; }
+    .msg .sender { font-size: .72rem; opacity: .75; margin-bottom: .15rem; display:block; }
+    .send-row { display:flex; gap:.6rem; }
+    .send-row input { flex: 1; padding: .7rem .9rem; border: 1px solid #cfd3c4; border-radius: 8px; font-size: .95rem; }
+    .send-row button { padding: .7rem 1.4rem; }
+</style>
+</head>
+<body>
+
+<div class="chat-wrap">
+    <div class="chat-header">
+        <div>
+            <a href="student-dashboard.html" class="back-link">&larr; Back to dashboard</a>
+            <h1 id="group-name-title">Group Chat</h1>
+        </div>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="send-row">
+        <input type="text" id="message-input" placeholder="Type a message..." maxlength="1000">
+        <button class="btn" id="send-btn" type="button">Send</button>
+    </div>
+</div>
+
+<script src="js/student-chat.js"></script>
+</body>
+</html>

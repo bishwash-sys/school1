@@ -21,6 +21,7 @@
             <li><a href="#" class="nav-link" data-section="results">Results</a></li>
             <li><a href="#" class="nav-link" data-section="homework">Homework</a></li>
             <li><a href="#" class="nav-link" data-section="student-accounts">Student Accounts</a></li>
+            <li><a href="#" class="nav-link" data-section="chats">Student Chats</a></li>
             <li><a href="#" class="nav-link" data-section="payments">Payments</a></li>
             <li><a href="#" class="nav-link" data-section="account">My Account</a></li>
             <li id="nav-admins-item" style="display:none;"><a href="#" class="nav-link" data-section="admins">Admin Users</a></li>
@@ -44,6 +45,18 @@
                 <div class="card"><h3>Total Teachers</h3><div class="card-value" id="d-teachers">—</div></div>
                 <div class="card"><h3>Total Classes</h3><div class="card-value" id="d-classes">—</div></div>
                 <div class="card"><h3>Pending Fees</h3><div class="card-value" id="d-fees">—</div></div>
+            </div>
+
+            <div class="form-box" style="max-width:360px;">
+                <h3 style="color:var(--forest); margin-bottom:.8rem; font-size:1.05rem;">Admissions Status (shown on homepage)</h3>
+                <div class="form-group">
+                    <select id="admission-status-select">
+                        <option value="Open">Open</option>
+                        <option value="Closed">Closed</option>
+                        <option value="Opening Soon">Opening Soon</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-submit" id="save-admission-status">Update Status</button>
             </div>
         </section>
 
@@ -232,6 +245,22 @@
                 <thead><tr><th>Student Name</th><th>Class</th><th>Username</th><th>Action</th></tr></thead>
                 <tbody id="tbl-student-accounts"></tbody>
             </table>
+        </section>
+
+        <!-- Student Chats (moderation view) -->
+        <section id="chats" class="section">
+            <h2>Student Chat Groups</h2>
+            <p style="color:#5b6255; margin-bottom:1.2rem; font-size:.9rem;">
+                For student safety, every group and message is visible here. Click a group to view its messages.
+            </p>
+            <table>
+                <thead><tr><th>Group Name</th><th>Created By</th><th>Members</th><th>Messages</th><th></th></tr></thead>
+                <tbody id="tbl-chats"></tbody>
+            </table>
+            <div id="chat-messages-view" style="display:none; margin-top:1.5rem;">
+                <h3 id="chat-messages-title" style="color:var(--forest); margin-bottom:.8rem;"></h3>
+                <div id="chat-messages-list" style="background:#f8f5ec; border-radius:8px; padding:1rem; max-height:400px; overflow-y:auto;"></div>
+            </div>
         </section>
 
         <!-- Payments (view only) -->

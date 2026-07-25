@@ -28,6 +28,15 @@ Each provider requires you to register an actual verified merchant account befor
 
 No code changes are needed to go live — only the `.env` values change.
 
+## Student QR Chat Groups
+Students can add classmates as contacts by scanning each other's personal QR code, then form group chats with confirmed contacts.
+
+- Every student has a unique QR code (on their dashboard) encoding a private "contact code."
+- Scanning a classmate's QR (using the device camera) adds them as a mutual contact.
+- Group chats can only include students who are already confirmed contacts — there's no way to add a stranger who hasn't been scanned.
+- **Every group and every message is visible to admins** under **Student Chats** in the dashboard, for moderation and safety. This is a supervised system, not a private/hidden one — worth mentioning to students and parents.
+- Messages refresh automatically every few seconds (no separate chat server needed).
+
 ## Homework & Student Accounts
 Students get their own separate login — completely walled off from the admin panel.
 

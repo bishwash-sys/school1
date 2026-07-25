@@ -24,6 +24,7 @@ const KHALTI_SECRET_KEY = process.env.KHALTI_SECRET_KEY || ''; // you must get y
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || ''; // you must get your own test key from dashboard.stripe.com
 const stripe = STRIPE_SECRET_KEY ? require('stripe')(STRIPE_SECRET_KEY) : null;
+const QRCode = require('qrcode');
 
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
@@ -123,7 +124,59 @@ CREATE TABLE IF NOT EXISTS student_logins (
     class TEXT,
     email TEXT
 );
+
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+);
+
+CREATE TABLE IF NOT EXISTS student_contacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_a TEXT NOT NULL,
+    student_b TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(student_a, student_b)
+);
+
+CREATE TABLE IF NOT EXISTS chat_groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    created_by TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS chat_group_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL,
+    username TEXT NOT NULL,
+    UNIQUE(group_id, username)
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    group_id INTEGER NOT NULL,
+    sender_username TEXT NOT NULL,
+    sender_name TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
 `);
+
+// Migration: add a QR "contact code" column to existing student_logins tables
+const studentCols = db.prepare("PRAGMA table_info(student_logins)").all().map(c => c.name);
+if (!studentCols.includes('contact_code')) {
+    db.exec('ALTER TABLE student_logins ADD COLUMN contact_code TEXT');
+}
+// Backfill a contact code for any student that doesn't have one yet
+const noCode = db.prepare("SELECT id FROM student_logins WHERE contact_code IS NULL OR contact_code = ''").all();
+for (const s of noCode) {
+    db.prepare('UPDATE student_logins SET contact_code = ? WHERE id = ?').run(crypto.randomBytes(16).toString('hex'), s.id);
+}
+
+// Seed a default admission status if not already set
+if (!db.prepare("SELECT value FROM settings WHERE key = 'admission_status'").get()) {
+    db.prepare("INSERT INTO settings (key, value) VALUES ('admission_status', 'Open')").run();
+}
 
 // Seed a default admin account if none exists yet.
 // This first account is an "owner" — the only role that can create/remove other logins.
@@ -250,6 +303,141 @@ app.get('/api/student/me', requireStudentAuth, (req, res) => {
     res.json(req.student);
 });
 
+// ==========================================================
+// STUDENT CHAT — QR-based contacts + group chat
+// Safety notes: contacts can only be added between two real, admin-created student
+// accounts (no open signup, no strangers). Every group and message is visible to
+// school admins for moderation — this is not a private/hidden channel.
+// ==========================================================
+
+// A student's own QR code, encoding their private contact code
+app.get('/api/student/my-qr', requireStudentAuth, async (req, res) => {
+    const row = db.prepare('SELECT contact_code FROM student_logins WHERE username = ?').get(req.student.username);
+    if (!row) return res.status(404).json({ error: 'Account not found.' });
+    try {
+        const qrDataUrl = await QRCode.toDataURL(row.contact_code, { width: 260, margin: 1 });
+        res.json({ contactCode: row.contact_code, qrDataUrl });
+    } catch (err) {
+        res.status(500).json({ error: 'Could not generate QR code.' });
+    }
+});
+
+function contactPairKey(a, b) {
+    // Store pairs in a consistent order so (A,B) and (B,A) are treated as the same contact
+    return [a, b].sort();
+}
+
+// Add a contact after scanning someone else's QR code
+app.post('/api/student/contacts/add', requireStudentAuth, (req, res) => {
+    const { contact_code } = req.body || {};
+    if (!contact_code) return res.status(400).json({ error: 'Missing QR code data.' });
+
+    const other = db.prepare('SELECT * FROM student_logins WHERE contact_code = ?').get(contact_code);
+    if (!other) return res.status(404).json({ error: 'That QR code is not recognized.' });
+    if (other.username === req.student.username) {
+        return res.status(400).json({ error: "You can't add yourself as a contact." });
+    }
+
+    const [a, b] = contactPairKey(req.student.username, other.username);
+    const existing = db.prepare('SELECT id FROM student_contacts WHERE student_a = ? AND student_b = ?').get(a, b);
+    if (!existing) {
+        db.prepare('INSERT INTO student_contacts (student_a, student_b) VALUES (?,?)').run(a, b);
+    }
+    res.status(201).json({ ok: true, addedContact: { username: other.username, name: other.student_name, class: other.class } });
+});
+
+// List this student's contacts
+app.get('/api/student/contacts', requireStudentAuth, (req, res) => {
+    const me = req.student.username;
+    const rows = db.prepare('SELECT * FROM student_contacts WHERE student_a = ? OR student_b = ?').all(me, me);
+    const otherUsernames = rows.map(r => (r.student_a === me ? r.student_b : r.student_a));
+    if (!otherUsernames.length) return res.json([]);
+    const placeholders = otherUsernames.map(() => '?').join(',');
+    const contacts = db.prepare(`SELECT username, student_name, class FROM student_logins WHERE username IN (${placeholders})`).all(...otherUsernames);
+    res.json(contacts);
+});
+
+// Create a group chat with one or more existing contacts
+app.post('/api/student/chat-groups', requireStudentAuth, (req, res) => {
+    const { name, member_usernames } = req.body || {};
+    const me = req.student.username;
+    if (!name || !Array.isArray(member_usernames) || member_usernames.length === 0) {
+        return res.status(400).json({ error: 'A group name and at least one member are required.' });
+    }
+
+    // Safety check: every member added must already be a confirmed contact (scanned QR before)
+    const myContacts = db.prepare('SELECT student_a, student_b FROM student_contacts WHERE student_a = ? OR student_b = ?').all(me, me);
+    const contactSet = new Set(myContacts.map(r => (r.student_a === me ? r.student_b : r.student_a)));
+    const invalid = member_usernames.filter(u => !contactSet.has(u));
+    if (invalid.length) {
+        return res.status(400).json({ error: 'You can only add students you\'ve already added as a contact via QR scan.' });
+    }
+
+    const info = db.prepare('INSERT INTO chat_groups (name, created_by) VALUES (?,?)').run(name, me);
+    const groupId = info.lastInsertRowid;
+    const addMember = db.prepare('INSERT OR IGNORE INTO chat_group_members (group_id, username) VALUES (?,?)');
+    addMember.run(groupId, me);
+    member_usernames.forEach(u => addMember.run(groupId, u));
+
+    res.status(201).json({ id: groupId, name });
+});
+
+function isGroupMember(groupId, username) {
+    return !!db.prepare('SELECT id FROM chat_group_members WHERE group_id = ? AND username = ?').get(groupId, username);
+}
+
+// List groups this student belongs to
+app.get('/api/student/chat-groups', requireStudentAuth, (req, res) => {
+    const rows = db.prepare(`
+        SELECT g.id, g.name, g.created_by, g.created_at
+        FROM chat_groups g
+        JOIN chat_group_members m ON m.group_id = g.id
+        WHERE m.username = ?
+        ORDER BY g.id DESC
+    `).all(req.student.username);
+    res.json(rows);
+});
+
+// Get messages for a group (must be a member)
+app.get('/api/student/chat-groups/:id/messages', requireStudentAuth, (req, res) => {
+    if (!isGroupMember(req.params.id, req.student.username)) {
+        return res.status(403).json({ error: 'You are not a member of this group.' });
+    }
+    const rows = db.prepare('SELECT * FROM chat_messages WHERE group_id = ? ORDER BY id ASC').all(req.params.id);
+    res.json(rows);
+});
+
+// Send a message to a group (must be a member)
+app.post('/api/student/chat-groups/:id/messages', requireStudentAuth, (req, res) => {
+    if (!isGroupMember(req.params.id, req.student.username)) {
+        return res.status(403).json({ error: 'You are not a member of this group.' });
+    }
+    const { message } = req.body || {};
+    if (!message || !message.trim()) return res.status(400).json({ error: 'Message cannot be empty.' });
+    if (message.length > 1000) return res.status(400).json({ error: 'Message is too long.' });
+
+    const info = db.prepare('INSERT INTO chat_messages (group_id, sender_username, sender_name, message) VALUES (?,?,?,?)')
+        .run(req.params.id, req.student.username, req.student.name, message.trim());
+    const row = db.prepare('SELECT * FROM chat_messages WHERE id = ?').get(info.lastInsertRowid);
+    res.status(201).json(row);
+});
+
+// ---------- Admin oversight of student chats (moderation, not editable) ----------
+app.get('/api/chat-groups', requireAuth, (req, res) => {
+    const rows = db.prepare(`
+        SELECT g.id, g.name, g.created_by, g.created_at,
+               (SELECT COUNT(*) FROM chat_group_members m WHERE m.group_id = g.id) AS member_count,
+               (SELECT COUNT(*) FROM chat_messages cm WHERE cm.group_id = g.id) AS message_count
+        FROM chat_groups g ORDER BY g.id DESC
+    `).all();
+    res.json(rows);
+});
+
+app.get('/api/chat-groups/:id/messages', requireAuth, (req, res) => {
+    const rows = db.prepare('SELECT * FROM chat_messages WHERE group_id = ? ORDER BY id ASC').all(req.params.id);
+    res.json(rows);
+});
+
 app.post('/api/logout', requireAuth, (req, res) => {
     const auth = req.headers['authorization'] || '';
     const token = auth.slice(7);
@@ -313,6 +501,23 @@ app.delete('/api/admins/:id', requireAuth, requireOwner, (req, res) => {
     }
     db.prepare('DELETE FROM admins WHERE id = ?').run(req.params.id);
     res.json({ ok: true });
+});
+
+// ---------- Site settings (e.g. admission status) ----------
+app.get('/api/settings/admission-status', (req, res) => {
+    const row = db.prepare("SELECT value FROM settings WHERE key = 'admission_status'").get();
+    res.json({ status: row ? row.value : 'Open' });
+});
+
+app.post('/api/settings/admission-status', requireAuth, (req, res) => {
+    const { status } = req.body || {};
+    const allowed = ['Open', 'Closed', 'Opening Soon'];
+    if (!allowed.includes(status)) {
+        return res.status(400).json({ error: 'Status must be one of: ' + allowed.join(', ') });
+    }
+    db.prepare("INSERT INTO settings (key, value) VALUES ('admission_status', ?) ON CONFLICT(key) DO UPDATE SET value = ?")
+      .run(status, status);
+    res.json({ ok: true, status });
 });
 
 // ---------- Public stats (no login needed, shown on homepage) ----------
@@ -383,8 +588,9 @@ app.post('/api/student-accounts', requireAuth, (req, res) => {
     if (existing) return res.status(409).json({ error: 'That username is already taken.' });
 
     const hash = bcrypt.hashSync(password, 10);
-    const info = db.prepare('INSERT INTO student_logins (username, password_hash, student_name, class, email) VALUES (?,?,?,?,?)')
-        .run(username, hash, student_name, className || '', email || '');
+    const contactCode = crypto.randomBytes(16).toString('hex');
+    const info = db.prepare('INSERT INTO student_logins (username, password_hash, student_name, class, email, contact_code) VALUES (?,?,?,?,?,?)')
+        .run(username, hash, student_name, className || '', email || '', contactCode);
     const row = db.prepare('SELECT id, username, student_name, class, email FROM student_logins WHERE id = ?').get(info.lastInsertRowid);
     res.status(201).json(row);
 });

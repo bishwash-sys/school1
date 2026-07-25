@@ -1,5 +1,10 @@
 // Public homepage behaviour — Shree Navajagriti Chandi School
 
+fetch('/api/settings/admission-status')
+    .then(r => r.json())
+    .then(data => { document.getElementById('stat-admissions').textContent = data.status; })
+    .catch(() => {});
+
 // Load live stats from the database via the API
 fetch('/api/public-stats')
     .then(r => r.json())

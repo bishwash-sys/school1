@@ -18,6 +18,7 @@ document.getElementById('studentLoginForm').addEventListener('submit', function 
     })
     .then((data) => {
         sessionStorage.setItem('studentToken', data.token);
+        sessionStorage.setItem('studentUsername', data.username);
         sessionStorage.setItem('studentName', data.studentName);
         sessionStorage.setItem('studentClass', data.class || '');
         window.location.href = 'student-dashboard.html';
