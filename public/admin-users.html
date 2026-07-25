@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin Users &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar" id="sidebar-mount"></div>
+    <div class="main-content">
+        <div class="header" id="header-mount"></div>
+
+        <section class="section active">
+            <h2>Admin Users</h2>
+            <p style="color:#5b6255; margin-bottom:1.2rem; font-size:.9rem;">
+                Create a separate login for your accountant or any authorized teacher instead of sharing one password. Only an owner account can access this page.
+            </p>
+            <form id="form-admins">
+                <div class="form-row">
+                    <div class="form-group"><label>Full Name</label><input type="text" id="au-fullname" placeholder="e.g. Sita Sharma"></div>
+                    <div class="form-group"><label>Username</label><input type="text" id="au-username" required></div>
+                    <div class="form-group"><label>Password</label><input type="password" id="au-password" required minlength="6"></div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="au-role">
+                            <option value="staff">Staff (accountant / teacher)</option>
+                            <option value="owner">Owner (full control)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Create Login</button>
+            </form>
+            <table>
+                <thead><tr><th>Full Name</th><th>Username</th><th>Role</th><th>Action</th></tr></thead>
+                <tbody id="tbl-admins"></tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/admin-common.js"></script>
+<script>
+    if (sessionStorage.getItem('adminRole') !== 'owner') {
+        alert('Only an owner account can access Admin Users.');
+        window.location.href = 'admin-dashboard.html';
+    }
+    renderAdminShell('admin-users', 'Admin Users');
+</script>
+<script src="js/admin-users.js"></script>
+</body>
+</html>

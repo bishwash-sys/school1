@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Classes &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar" id="sidebar-mount"></div>
+    <div class="main-content">
+        <div class="header" id="header-mount"></div>
+
+        <section class="section active">
+            <h2>Manage Classes</h2>
+            <form id="form-classes">
+                <div class="form-row">
+                    <div class="form-group"><label>Class Name</label><input type="text" id="cl-name" required></div>
+                    <div class="form-group"><label>Class Teacher</label><input type="text" id="cl-teacher"></div>
+                    <div class="form-group"><label>Number of Students</label><input type="number" id="cl-count" value="0"></div>
+                </div>
+                <button type="submit" class="btn-submit">Add Class</button>
+            </form>
+            <table>
+                <thead><tr><th>Class Name</th><th>Teacher</th><th>Students</th><th>Action</th></tr></thead>
+                <tbody id="tbl-classes"></tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/admin-common.js"></script>
+<script>renderAdminShell('classes', 'Manage Classes');</script>
+<script src="js/admin-classes.js"></script>
+</body>
+</html>

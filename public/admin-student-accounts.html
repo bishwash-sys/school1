@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Student Accounts &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar" id="sidebar-mount"></div>
+    <div class="main-content">
+        <div class="header" id="header-mount"></div>
+
+        <section class="section active">
+            <h2>Student Accounts</h2>
+            <p style="color:#5b6255; margin-bottom:1.2rem; font-size:.9rem;">
+                Create a login for each student so they can check their homework and pay fees online. Students can only view their own class's homework — they have no access to this admin panel.
+            </p>
+            <form id="form-student-accounts">
+                <div class="form-row">
+                    <div class="form-group"><label>Student Name</label><input type="text" id="sa-name" required></div>
+                    <div class="form-group">
+                        <label>Class</label>
+                        <select id="sa-class">
+                            <option value="">Select Class</option>
+                            <option>Class 1</option><option>Class 2</option><option>Class 3</option>
+                            <option>Class 4</option><option>Class 5</option><option>Class 6</option>
+                            <option>Class 7</option><option>Class 8</option><option>Class 9</option>
+                            <option>Class 10</option><option>Class 11</option><option>Class 12</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Username</label><input type="text" id="sa-username" required></div>
+                    <div class="form-group"><label>Password</label><input type="password" id="sa-password" required minlength="6"></div>
+                    <div class="form-group"><label>Email (optional)</label><input type="email" id="sa-email"></div>
+                </div>
+                <button type="submit" class="btn-submit">Create Student Login</button>
+            </form>
+            <table>
+                <thead><tr><th>Student Name</th><th>Class</th><th>Username</th><th>Action</th></tr></thead>
+                <tbody id="tbl-student-accounts"></tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/admin-common.js"></script>
+<script>renderAdminShell('student-accounts', 'Student Accounts');</script>
+<script src="js/admin-student-accounts.js"></script>
+</body>
+</html>

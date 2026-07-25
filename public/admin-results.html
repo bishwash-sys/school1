@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Results &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar" id="sidebar-mount"></div>
+    <div class="main-content">
+        <div class="header" id="header-mount"></div>
+
+        <section class="section active">
+            <h2>Manage Results</h2>
+            <form id="form-results">
+                <div class="form-row">
+                    <div class="form-group"><label>Student Name</label><input type="text" id="r-name" required></div>
+                    <div class="form-group"><label>Subject</label><input type="text" id="r-subject" required></div>
+                    <div class="form-group"><label>Marks</label><input type="number" id="r-marks" min="0" max="100" required></div>
+                </div>
+                <button type="submit" class="btn-submit">Add Result</button>
+            </form>
+            <table>
+                <thead><tr><th>Student Name</th><th>Subject</th><th>Marks</th><th>Action</th></tr></thead>
+                <tbody id="tbl-results"></tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/admin-common.js"></script>
+<script>renderAdminShell('results', 'Manage Results');</script>
+<script src="js/admin-results.js"></script>
+</body>
+</html>

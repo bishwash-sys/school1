@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Homework &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar" id="sidebar-mount"></div>
+    <div class="main-content">
+        <div class="header" id="header-mount"></div>
+
+        <section class="section active">
+            <h2>Manage Homework</h2>
+            <form id="form-homework">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Class</label>
+                        <select id="hw-class" required>
+                            <option value="">Select Class</option>
+                            <option>Class 1</option><option>Class 2</option><option>Class 3</option>
+                            <option>Class 4</option><option>Class 5</option><option>Class 6</option>
+                            <option>Class 7</option><option>Class 8</option><option>Class 9</option>
+                            <option>Class 10</option><option>Class 11</option><option>Class 12</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Subject</label><input type="text" id="hw-subject"></div>
+                    <div class="form-group"><label>Title</label><input type="text" id="hw-title" required></div>
+                    <div class="form-group"><label>Due Date</label><input type="date" id="hw-due"></div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="hw-description" placeholder="What students need to do..."></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Post Homework</button>
+            </form>
+            <table>
+                <thead><tr><th>Class</th><th>Subject</th><th>Title</th><th>Due Date</th><th>Action</th></tr></thead>
+                <tbody id="tbl-homework"></tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/admin-common.js"></script>
+<script>renderAdminShell('homework', 'Manage Homework');</script>
+<script src="js/admin-homework.js"></script>
+</body>
+</html>

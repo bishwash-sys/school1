@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Students &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar" id="sidebar-mount"></div>
+    <div class="main-content">
+        <div class="header" id="header-mount"></div>
+
+        <section class="section active">
+            <h2>Manage Students</h2>
+            <form id="form-students">
+                <div class="form-row">
+                    <div class="form-group"><label>Roll Number</label><input type="text" id="s-roll" required></div>
+                    <div class="form-group"><label>Student Name</label><input type="text" id="s-name" required></div>
+                    <div class="form-group">
+                        <label>Class</label>
+                        <select id="s-class" required>
+                            <option value="">Select Class</option>
+                            <option>Class 1</option><option>Class 2</option><option>Class 3</option>
+                            <option>Class 4</option><option>Class 5</option><option>Class 6</option>
+                            <option>Class 7</option><option>Class 8</option><option>Class 9</option>
+                            <option>Class 10</option><option>Class 11</option><option>Class 12</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Email</label><input type="email" id="s-email"></div>
+                </div>
+                <button type="submit" class="btn-submit">Add Student</button>
+            </form>
+            <table>
+                <thead><tr><th>Roll No</th><th>Name</th><th>Class</th><th>Email</th><th>Action</th></tr></thead>
+                <tbody id="tbl-students"></tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/admin-common.js"></script>
+<script>renderAdminShell('students', 'Manage Students');</script>
+<script src="js/admin-students.js"></script>
+</body>
+</html>

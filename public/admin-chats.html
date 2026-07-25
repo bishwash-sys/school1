@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Student Chats &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar" id="sidebar-mount"></div>
+    <div class="main-content">
+        <div class="header" id="header-mount"></div>
+
+        <section class="section active">
+            <h2>Student Chat Groups</h2>
+            <p style="color:#5b6255; margin-bottom:1.2rem; font-size:.9rem;">
+                For student safety, every group and message is visible here. Click a group to view its messages.
+            </p>
+            <table>
+                <thead><tr><th>Group Name</th><th>Created By</th><th>Members</th><th>Messages</th><th></th></tr></thead>
+                <tbody id="tbl-chats"></tbody>
+            </table>
+            <div id="chat-messages-view" style="display:none; margin-top:1.5rem;">
+                <h3 id="chat-messages-title" style="color:var(--forest); margin-bottom:.8rem;"></h3>
+                <div id="chat-messages-list" style="background:#f8f5ec; border-radius:8px; padding:1rem; max-height:400px; overflow-y:auto;"></div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/admin-common.js"></script>
+<script>renderAdminShell('chats', 'Student Chats');</script>
+<script src="js/admin-chats.js"></script>
+</body>
+</html>

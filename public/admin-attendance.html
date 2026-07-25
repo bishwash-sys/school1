@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Attendance &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div class="container">
+    <div class="sidebar" id="sidebar-mount"></div>
+    <div class="main-content">
+        <div class="header" id="header-mount"></div>
+
+        <section class="section active">
+            <h2>Manage Attendance</h2>
+            <form id="form-attendance">
+                <div class="form-row">
+                    <div class="form-group"><label>Class</label><input type="text" id="a-class" required placeholder="e.g. Class 10 A"></div>
+                    <div class="form-group"><label>Date</label><input type="date" id="a-date" required></div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="a-status">
+                            <option>Present</option>
+                            <option>Absent</option>
+                            <option>Holiday</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Mark Attendance</button>
+            </form>
+            <table>
+                <thead><tr><th>Class</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="tbl-attendance"></tbody>
+            </table>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/admin-common.js"></script>
+<script>renderAdminShell('attendance', 'Manage Attendance');</script>
+<script src="js/admin-attendance.js"></script>
+</body>
+</html>
