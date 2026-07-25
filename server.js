@@ -315,7 +315,7 @@ app.get('/api/student/my-qr', requireStudentAuth, async (req, res) => {
     const row = db.prepare('SELECT contact_code FROM student_logins WHERE username = ?').get(req.student.username);
     if (!row) return res.status(404).json({ error: 'Account not found.' });
     try {
-        const qrDataUrl = await QRCode.toDataURL(row.contact_code, { width: 260, margin: 1 });
+        const qrDataUrl = await QRCode.toDataURL(row.contact_code, { width: 320, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#000000', light: '#ffffff' } });
         res.json({ contactCode: row.contact_code, qrDataUrl });
     } catch (err) {
         res.status(500).json({ error: 'Could not generate QR code.' });

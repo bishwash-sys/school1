@@ -23,6 +23,7 @@ body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--
     background: var(--forest-dark);
     color: #fff;
     padding: 1.5rem;
+    overflow-y: auto;
 }
 
 .sidebar h2 {

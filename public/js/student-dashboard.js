@@ -75,7 +75,9 @@ const video = document.getElementById('scanner-video');
 
 startScanBtn.addEventListener('click', async () => {
     try {
-        scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        scanStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 720 }, height: { ideal: 720 } }
+        });
         video.srcObject = scanStream;
         video.play();
         scannerWrap.style.display = 'block';
@@ -99,16 +101,19 @@ function stopScanning() {
 }
 
 const scanCanvas = document.createElement('canvas');
-const scanCtx = scanCanvas.getContext('2d');
+const scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
+const SCAN_MAX_DIM = 480; // downscaling the frame makes jsQR dramatically faster on phones
 
 function tickScan() {
     if (!scanning) return;
     if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        scanCanvas.width = video.videoWidth;
-        scanCanvas.height = video.videoHeight;
+        const vw = video.videoWidth, vh = video.videoHeight;
+        const scale = Math.min(1, SCAN_MAX_DIM / Math.max(vw, vh));
+        scanCanvas.width = Math.round(vw * scale);
+        scanCanvas.height = Math.round(vh * scale);
         scanCtx.drawImage(video, 0, 0, scanCanvas.width, scanCanvas.height);
         const imageData = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
         if (code && code.data) {
             stopScanning();
             addContactByCode(code.data);

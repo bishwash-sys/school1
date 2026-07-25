@@ -10,6 +10,25 @@ A full school website with a working database-backed admin panel.
 - **Admin dashboard** (`public/admin-dashboard.html`) — manage Students, Teachers, Classes, Attendance, Fees, and Results. Every add/delete goes straight to the SQLite database through the API.
 - **Backend** (`server.js`) — REST API (`/api/...`) with session-token auth. No page can read/write data without a valid login token.
 
+## Admin panel structure
+The admin panel is now a set of separate pages instead of one long page with tabs — each section has its own clean URL, making it much easier to navigate, bookmark, or link to directly:
+```
+admin-dashboard.html          Overview + admissions status
+admin-students.html           Manage students
+admin-teachers.html           Manage teachers
+admin-classes.html            Manage classes
+admin-attendance.html         Manage attendance
+admin-fees.html                Manage fees
+admin-results.html            Manage results
+admin-homework.html           Post homework
+admin-student-accounts.html   Create student logins
+admin-chats.html               View student chat groups (moderation)
+admin-payments.html           View payments & donations
+admin-account.html            Change your own password
+admin-users.html               Manage other admin logins (owner only)
+```
+All pages share one sidebar/header (`js/admin-common.js`) so login, navigation, and styling stay consistent everywhere.
+
 ## Payments (fees + donations)
 The public **Pay Fees / Donate** page (`public/pay.html`) accepts payments via **eSewa**, **Khalti**, and **cards (Stripe)**. Every payment attempt is logged in the `payments` table and visible to admins under **Payments** in the dashboard.
 
