@@ -10,6 +10,7 @@
     --ink: #23291F;
     --line: #E4DCC8;
     --danger: #B4432F;
+    --notice-holiday: #2E6F8E;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -164,3 +165,71 @@ footer strong { color: #fff; }
     .site-nav ul { display: none; }
     .hero h1 { font-size: 2.1rem; }
 }
+
+/* ---------- Notice Board ---------- */
+.notice-board { display: flex; flex-direction: column; gap: 1rem; }
+
+.notice-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--forest);
+    border-radius: 10px;
+    padding: 1.3rem 1.5rem;
+    position: relative;
+    transition: box-shadow .2s, transform .2s;
+}
+.notice-card:hover { box-shadow: 0 8px 20px rgba(31,74,61,.08); transform: translateY(-1px); }
+
+.notice-card.pinned { border-left-color: var(--marigold-deep); background: linear-gradient(135deg, #fffdf7 0%, #fff 60%); }
+.notice-card.pinned::before {
+    content: "📌 Pinned";
+    position: absolute;
+    top: -10px; right: 1rem;
+    background: var(--marigold);
+    color: var(--forest-dark);
+    font-size: .7rem;
+    font-weight: 700;
+    padding: .15rem .6rem;
+    border-radius: 999px;
+    letter-spacing: .02em;
+}
+
+.notice-card.cat-event { border-left-color: var(--marigold-deep); }
+.notice-card.cat-urgent { border-left-color: var(--danger); }
+.notice-card.cat-holiday { border-left-color: var(--notice-holiday); }
+
+.notice-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .8rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.notice-top h3 { font-family: 'Fraunces', serif; color: var(--forest); font-size: 1.08rem; }
+
+.notice-badge {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: .25rem .7rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    color: #fff;
+}
+.notice-badge.General { background: var(--forest); }
+.notice-badge.Event { background: var(--marigold-deep); }
+.notice-badge.Urgent { background: var(--danger); }
+.notice-badge.Holiday { background: var(--notice-holiday); }
+
+.notice-body { color: #4b5245; font-size: .92rem; line-height: 1.6; white-space: pre-wrap; }
+.notice-date { font-size: .78rem; color: #8a9084; margin-top: .7rem; }
+
+.notice-filters { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+.notice-filter-btn {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    padding: .45rem 1rem;
+    border-radius: 999px;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.notice-filter-btn.active { background: var(--forest); color: #fff; border-color: var(--forest); }
+
+.notice-empty { text-align: center; color: #8a9084; padding: 2.5rem 0; font-size: .92rem; }

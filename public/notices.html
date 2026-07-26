@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notice Board &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+
+<nav class="site-nav">
+    <div class="brand"><span class="emblem">SN</span> Shree Navajagriti Chandi School</div>
+    <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+    </ul>
+</nav>
+
+<section class="page" style="max-width:820px;">
+    <h2>Notice Board</h2>
+    <p class="lede">All announcements, events, and updates from the school in one place.</p>
+
+    <div class="notice-filters" id="notice-filters">
+        <button class="notice-filter-btn active" data-category="All">All</button>
+        <button class="notice-filter-btn" data-category="General">General</button>
+        <button class="notice-filter-btn" data-category="Event">Event</button>
+        <button class="notice-filter-btn" data-category="Urgent">Urgent</button>
+        <button class="notice-filter-btn" data-category="Holiday">Holiday</button>
+    </div>
+
+    <div class="notice-board" id="all-notices"></div>
+</section>
+
+<footer>
+    <p><strong>Shree Navajagriti Chandi School</strong></p>
+</footer>
+
+<script src="js/notices-common.js"></script>
+<script src="js/notices.js"></script>
+</body>
+</html>

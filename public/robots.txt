@@ -1,4 +1,5 @@
 User-agent: *
 Disallow: /admin-login.html
 Disallow: /admin-*.html
-Disallow: /student-dashboard.html
+Disallow: /student-login.html
+Disallow: /student-*.html

@@ -10,6 +10,14 @@ A full school website with a working database-backed admin panel.
 - **Admin dashboard** (`public/admin-dashboard.html`) — manage Students, Teachers, Classes, Attendance, Fees, and Results. Every add/delete goes straight to the SQLite database through the API.
 - **Backend** (`server.js`) — REST API (`/api/...`) with session-token auth. No page can read/write data without a valid login token.
 
+## Notice Board
+A shared announcement system visible in three places:
+- **Homepage** — latest 3 notices shown right on the public site (`#notices` section).
+- **Full public page** — `notices.html`, with category filter chips (General / Event / Urgent / Holiday).
+- **Student portal** — `student-notices.html`, same feed, inside the logged-in student area.
+
+Admins manage everything from **Notice Board** in the admin sidebar (`admin-notices.html`): post a title + content, pick a category (each has its own color), and optionally **pin** it to always show first. Notices are public (no login needed to read), only posting/deleting requires an admin login.
+
 ## Admin panel structure
 The admin panel is now a set of separate pages instead of one long page with tabs — each section has its own clean URL, making it much easier to navigate, bookmark, or link to directly:
 ```
@@ -46,6 +54,16 @@ Each provider requires you to register an actual verified merchant account befor
 - **Stripe** — activate your account (business details + bank account) in the Stripe dashboard, then swap in your live secret key (starts with `sk_live_...`).
 
 No code changes are needed to go live — only the `.env` values change.
+
+## Student portal structure
+Like the admin panel, the student side is now separate pages instead of one long scrolling page:
+```
+student-dashboard.html   Overview (welcome + quick counts + links)
+student-homework.html    Full homework list
+student-groups.html      QR code, scanning, contacts, and group creation
+student-chat.html        An individual group's chat room
+```
+All share one top nav bar (`js/student-common.js`) with Dashboard / Homework / Study Groups links plus Pay Fees and Logout, always visible.
 
 ## Student QR Chat Groups
 Students can add classmates as contacts by scanning each other's personal QR code, then form group chats with confirmed contacts.

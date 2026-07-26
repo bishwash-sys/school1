@@ -12,7 +12,7 @@ const params = new URLSearchParams(window.location.search);
 const groupId = params.get('group');
 if (!groupId) {
     alert('No group selected.');
-    window.location.href = 'student-dashboard.html';
+    window.location.href = 'student-groups.html';
 }
 
 const messagesBox = document.getElementById('messages');
@@ -49,7 +49,7 @@ function loadMessages() {
         }
         if (r.status === 403) {
             alert('You are not a member of this group.');
-            window.location.href = 'student-dashboard.html';
+            window.location.href = 'student-groups.html';
             throw new Error('Forbidden');
         }
         return r.json();

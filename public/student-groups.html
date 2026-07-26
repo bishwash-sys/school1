@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Study Groups &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/student.css">
+</head>
+<body>
+
+<div class="student-page-wrap">
+    <div class="student-topbar" id="student-nav-mount"></div>
+
+    <h2 style="color:var(--forest); font-size:1.3rem; margin-bottom:.4rem;">Study Group Chat</h2>
+    <p style="color:#5b6255; font-size:.88rem; margin-bottom:1.4rem;">
+        Add classmates by scanning their QR code, then start a group chat. Chats are visible to school admins for safety.
+    </p>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:1.2rem; margin-bottom:1.5rem;">
+        <div class="hw-card" style="text-align:center;">
+            <h3 style="margin-bottom:.8rem;">My QR Code</h3>
+            <img id="my-qr-img" src="" alt="Your QR code" style="width:220px; height:220px; margin:0 auto; display:block; background:#fff; padding:8px; border-radius:8px;">
+            <p style="font-size:.8rem; color:#8a9084; margin-top:.6rem;">Let a classmate scan this to add you.</p>
+        </div>
+
+        <div class="hw-card">
+            <h3 style="margin-bottom:.8rem;">Add a Classmate</h3>
+            <button class="btn" id="start-scan-btn" type="button">Scan Their QR Code</button>
+            <div id="scanner-wrap" style="display:none; margin-top:1rem;">
+                <video id="scanner-video" style="width:100%; border-radius:8px;" muted playsinline></video>
+                <button class="btn secondary" id="stop-scan-btn" type="button" style="margin-top:.6rem; width:100%;">Cancel Scanning</button>
+            </div>
+            <p id="scan-status" style="font-size:.85rem; margin-top:.6rem; color:#5b6255;"></p>
+        </div>
+    </div>
+
+    <div class="hw-card">
+        <h3 style="margin-bottom:.8rem;">Create a Group Chat</h3>
+        <p style="font-size:.85rem; color:#8a9084; margin-bottom:.6rem;">Select from classmates you've added as contacts.</p>
+        <div id="contacts-checklist" style="margin-bottom:1rem;"></div>
+        <div class="form-group" style="margin-bottom:.8rem;">
+            <input type="text" id="group-name-input" placeholder="Group name (e.g. Class 10 Study Group)">
+        </div>
+        <button class="btn" id="create-group-btn" type="button">Create Group</button>
+    </div>
+
+    <h3 style="color:var(--forest); font-size:1.1rem; margin:1.8rem 0 1rem;">My Groups</h3>
+    <div id="groups-list"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<script src="js/student-common.js"></script>
+<script>renderStudentShell('groups');</script>
+<script src="js/student-groups.js"></script>
+</body>
+</html>

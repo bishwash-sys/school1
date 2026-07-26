@@ -6,77 +6,41 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Student Dashboard &mdash; Shree Navajagriti Chandi School</title>
 <link rel="stylesheet" href="css/site.css">
-<style>
-    .dash-wrap { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem; }
-    .dash-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.8rem; flex-wrap:wrap; gap:.8rem; }
-    .dash-header h1 { color: var(--forest); font-size:1.6rem; }
-    .hw-card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:1.3rem 1.5rem; margin-bottom:1rem; }
-    .hw-card .hw-top { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:.5rem; }
-    .hw-card h3 { color: var(--forest); font-size:1.05rem; }
-    .hw-tag { background:#eef4ee; color: var(--forest); font-size:.75rem; font-weight:600; padding:.2rem .6rem; border-radius:999px; }
-    .hw-due { font-size:.82rem; color: var(--marigold-deep); font-weight:600; }
-    .hw-desc { margin-top:.5rem; color:#4b5245; font-size:.92rem; }
-    .empty-state { text-align:center; color:#8a9084; padding:2.5rem 0; }
-    .logout-link { background:#B4432F; color:#fff; border:none; padding:.55rem 1.1rem; border-radius:6px; cursor:pointer; font-size:.85rem; font-weight:600; }
-</style>
+<link rel="stylesheet" href="css/student.css">
 </head>
 <body>
 
-<div class="dash-wrap">
-    <div class="dash-header">
-        <div>
-            <h1>Welcome, <span id="student-name-display">Student</span></h1>
-            <p style="color:#5b6255; font-size:.9rem;">Class: <span id="student-class-display">—</span></p>
+<div class="student-page-wrap">
+    <div class="student-topbar" id="student-nav-mount"></div>
+
+    <h2 style="color:var(--forest); font-size:1.3rem; margin-bottom:1.2rem;">Welcome back!</h2>
+
+    <div class="summary-grid">
+        <div class="summary-card">
+            <h4>Homework</h4>
+            <div class="num" id="summary-homework-count">—</div>
+            <a href="student-homework.html">View homework &rarr;</a>
         </div>
-        <div style="display:flex; gap:.7rem;">
-            <a href="pay.html" id="pay-fees-link" class="btn">Pay Fees</a>
-            <button class="logout-link" onclick="studentLogout()">Logout</button>
+        <div class="summary-card">
+            <h4>Notice Board</h4>
+            <div class="num" id="summary-notices-count">—</div>
+            <a href="student-notices.html">View notices &rarr;</a>
         </div>
-    </div>
-
-    <h2 style="color:var(--forest); font-size:1.2rem; margin-bottom:1rem;">Your Homework</h2>
-    <div id="homework-list"></div>
-
-    <hr style="border:none; border-top:1px solid var(--line); margin:2.5rem 0;">
-
-    <h2 style="color:var(--forest); font-size:1.2rem; margin-bottom:.5rem;">Study Group Chat</h2>
-    <p style="color:#5b6255; font-size:.88rem; margin-bottom:1.2rem;">
-        Add classmates by scanning their QR code, then start a group chat. Chats are visible to school admins for safety.
-    </p>
-
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:1.2rem; margin-bottom:1.5rem;">
-        <div class="hw-card" style="text-align:center;">
-            <h3 style="margin-bottom:.8rem;">My QR Code</h3>
-            <img id="my-qr-img" src="" alt="Your QR code" style="width:220px; height:220px; margin:0 auto; display:block; background:#fff; padding:8px; border-radius:8px;">
-            <p style="font-size:.8rem; color:#8a9084; margin-top:.6rem;">Let a classmate scan this to add you.</p>
+        <div class="summary-card">
+            <h4>My Study Groups</h4>
+            <div class="num" id="summary-groups-count">—</div>
+            <a href="student-groups.html">View groups &rarr;</a>
         </div>
-
-        <div class="hw-card">
-            <h3 style="margin-bottom:.8rem;">Add a Classmate</h3>
-            <button class="btn" id="start-scan-btn" type="button">Scan Their QR Code</button>
-            <div id="scanner-wrap" style="display:none; margin-top:1rem;">
-                <video id="scanner-video" style="width:100%; border-radius:8px;" muted playsinline></video>
-                <button class="btn secondary" id="stop-scan-btn" type="button" style="margin-top:.6rem; width:100%;">Cancel Scanning</button>
-            </div>
-            <p id="scan-status" style="font-size:.85rem; margin-top:.6rem; color:#5b6255;"></p>
+        <div class="summary-card">
+            <h4>School Fees</h4>
+            <div class="num" style="font-size:1.1rem;">Pay online</div>
+            <a id="summary-pay-link" href="pay.html">Pay Fees &rarr;</a>
         </div>
     </div>
-
-    <div class="hw-card">
-        <h3 style="margin-bottom:.8rem;">Create a Group Chat</h3>
-        <p style="font-size:.85rem; color:#8a9084; margin-bottom:.6rem;">Select from classmates you've added as contacts.</p>
-        <div id="contacts-checklist" style="margin-bottom:1rem;"></div>
-        <div class="form-group" style="margin-bottom:.8rem;">
-            <input type="text" id="group-name-input" placeholder="Group name (e.g. Class 10 Study Group)">
-        </div>
-        <button class="btn" id="create-group-btn" type="button">Create Group</button>
-    </div>
-
-    <h3 style="color:var(--forest); font-size:1.1rem; margin:1.8rem 0 1rem;">My Groups</h3>
-    <div id="groups-list"></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<script src="js/student-common.js"></script>
+<script>renderStudentShell('dashboard');</script>
 <script src="js/student-dashboard.js"></script>
 </body>
 </html>

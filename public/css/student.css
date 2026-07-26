@@ -1,0 +1,55 @@
+/* Student portal shared styles — Shree Navajagriti Chandi School */
+
+.student-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    margin-bottom: 1.8rem;
+}
+
+.student-brand strong { color: var(--forest); font-size: 1.1rem; display: block; }
+.student-class-tag { font-size: .82rem; color: #5b6255; }
+
+.student-nav { display: flex; gap: .4rem; flex-wrap: wrap; }
+.student-nav-link {
+    text-decoration: none;
+    color: var(--ink);
+    font-size: .88rem;
+    font-weight: 600;
+    padding: .5rem .9rem;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+}
+.student-nav-link.active { background: var(--forest); color: #fff; border-color: var(--forest); }
+.student-nav-link:hover:not(.active) { background: #f2efe6; }
+
+.student-actions { display: flex; gap: .6rem; align-items: center; }
+
+.logout-link {
+    background: #B4432F; color: #fff; border: none;
+    padding: .55rem 1.1rem; border-radius: 6px; cursor: pointer;
+    font-size: .85rem; font-weight: 600;
+}
+.logout-link:hover { background: #8f3323; }
+
+.student-page-wrap { max-width: 780px; margin: 0 auto; padding: 2rem 1.2rem 3rem; }
+
+.hw-card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:1.3rem 1.5rem; margin-bottom:1rem; }
+.hw-card .hw-top { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:.5rem; }
+.hw-card h3 { color: var(--forest); font-size:1.05rem; }
+.hw-tag { background:#eef4ee; color: var(--forest); font-size:.75rem; font-weight:600; padding:.2rem .6rem; border-radius:999px; }
+.hw-due { font-size:.82rem; color: var(--marigold-deep); font-weight:600; }
+.hw-desc { margin-top:.5rem; color:#4b5245; font-size:.92rem; }
+.empty-state { text-align:center; color:#8a9084; padding:2.5rem 0; }
+
+.summary-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+.summary-card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:1.3rem; text-align:center; }
+.summary-card .num { font-family:'Fraunces', serif; font-size:1.8rem; font-weight:700; color: var(--marigold-deep); }
+.summary-card h4 { color:#5b6255; font-size:.85rem; font-weight:500; margin-bottom:.4rem; }
+.summary-card a { display:inline-block; margin-top:.6rem; font-size:.82rem; color: var(--forest); font-weight:600; text-decoration:none; }

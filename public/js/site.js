@@ -1,5 +1,10 @@
 // Public homepage behaviour — Shree Navajagriti Chandi School
 
+fetch('/api/notices/public?limit=3')
+    .then(r => r.json())
+    .then(notices => renderNoticeList(document.getElementById('homepage-notices'), notices, 'No notices posted yet — check back soon.'))
+    .catch(() => {});
+
 fetch('/api/settings/admission-status')
     .then(r => r.json())
     .then(data => { document.getElementById('stat-admissions').textContent = data.status; })

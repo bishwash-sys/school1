@@ -130,6 +130,16 @@ CREATE TABLE IF NOT EXISTS settings (
     value TEXT
 );
 
+CREATE TABLE IF NOT EXISTS notices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'General',
+    pinned INTEGER NOT NULL DEFAULT 0,
+    posted_by TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS student_contacts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     student_a TEXT NOT NULL,
@@ -518,6 +528,36 @@ app.post('/api/settings/admission-status', requireAuth, (req, res) => {
     db.prepare("INSERT INTO settings (key, value) VALUES ('admission_status', ?) ON CONFLICT(key) DO UPDATE SET value = ?")
       .run(status, status);
     res.json({ ok: true, status });
+});
+
+// ---------- Notice board ----------
+const NOTICE_CATEGORIES = ['General', 'Event', 'Urgent', 'Holiday'];
+
+// Public: anyone (homepage visitors, students) can read notices, no login needed
+app.get('/api/notices/public', (req, res) => {
+    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const rows = db.prepare('SELECT id, title, content, category, pinned, created_at FROM notices ORDER BY pinned DESC, id DESC LIMIT ?').all(limit);
+    res.json(rows);
+});
+
+// Admin: manage notices
+app.get('/api/notices', requireAuth, (req, res) => {
+    res.json(db.prepare('SELECT * FROM notices ORDER BY pinned DESC, id DESC').all());
+});
+
+app.post('/api/notices', requireAuth, (req, res) => {
+    const { title, content, category, pinned } = req.body || {};
+    if (!title || !content) return res.status(400).json({ error: 'Title and content are required.' });
+    const cat = NOTICE_CATEGORIES.includes(category) ? category : 'General';
+    const info = db.prepare('INSERT INTO notices (title, content, category, pinned, posted_by) VALUES (?,?,?,?,?)')
+        .run(title, content, cat, (pinned === true || pinned === 'true' || pinned === 1 || pinned === '1') ? 1 : 0, req.admin);
+    const row = db.prepare('SELECT * FROM notices WHERE id = ?').get(info.lastInsertRowid);
+    res.status(201).json(row);
+});
+
+app.delete('/api/notices/:id', requireAuth, (req, res) => {
+    db.prepare('DELETE FROM notices WHERE id = ?').run(req.params.id);
+    res.json({ ok: true });
 });
 
 // ---------- Public stats (no login needed, shown on homepage) ----------

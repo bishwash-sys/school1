@@ -10,6 +10,7 @@ const ADMIN_NAV_ITEMS = [
     { id: 'fees', label: 'Fees', href: 'admin-fees.html' },
     { id: 'results', label: 'Results', href: 'admin-results.html' },
     { id: 'homework', label: 'Homework', href: 'admin-homework.html' },
+    { id: 'notices', label: 'Notice Board', href: 'admin-notices.html' },
     { id: 'student-accounts', label: 'Student Accounts', href: 'admin-student-accounts.html' },
     { id: 'chats', label: 'Student Chats', href: 'admin-chats.html' },
     { id: 'payments', label: 'Payments', href: 'admin-payments.html' },

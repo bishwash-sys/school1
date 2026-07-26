@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Notice Board &mdash; Shree Navajagriti Chandi School</title>
+<link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/site.css">
+<style>
+    /* site.css's notice-card styles are reused here; admin.css handles the shell/layout */
+    #admin-notices-list { margin-top: 1.5rem; }
+    .notice-card .btn-delete { position: absolute; bottom: 1rem; right: 1.2rem; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="sidebar" id="sidebar-mount"></div>
+    <div class="main-content">
+        <div class="header" id="header-mount"></div>
+
+        <section class="section active">
+            <h2>Notice Board</h2>
+            <p style="color:#5b6255; margin-bottom:1.2rem; font-size:.9rem;">
+                Post announcements for the homepage and student portal. Pinned notices always appear first.
+            </p>
+            <form id="form-notices">
+                <div class="form-row">
+                    <div class="form-group"><label>Title</label><input type="text" id="n-title" required></div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="n-category">
+                            <option>General</option>
+                            <option>Event</option>
+                            <option>Urgent</option>
+                            <option>Holiday</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:flex-end; gap:.5rem;">
+                        <label style="display:flex; align-items:center; gap:.5rem; margin-bottom:.7rem; font-weight:500;">
+                            <input type="checkbox" id="n-pinned" style="width:auto;"> Pin to top
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Content</label>
+                    <textarea id="n-content" required placeholder="Write the announcement..."></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Post Notice</button>
+            </form>
+
+            <div class="notice-board" id="admin-notices-list"></div>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/admin-common.js"></script>
+<script>renderAdminShell('notices', 'Notice Board');</script>
+<script src="js/notices-common.js"></script>
+<script src="js/admin-notices.js"></script>
+</body>
+</html>
