@@ -676,6 +676,21 @@ app.get('/api/payments', requireAuth, (req, res) => {
     res.json(db.prepare('SELECT * FROM payments ORDER BY id DESC').all());
 });
 
+// Deleting a financial record is sensitive — restricted to owner accounts only
+app.delete('/api/payments/:id', requireAuth, requireOwner, (req, res) => {
+    const row = db.prepare('SELECT id FROM payments WHERE id = ?').get(req.params.id);
+    if (!row) return res.status(404).json({ error: 'Payment record not found.' });
+    db.prepare('DELETE FROM payments WHERE id = ?').run(req.params.id);
+    res.json({ ok: true });
+});
+
+// Deleting a financial record is restricted to owner accounts, to keep the
+// payment ledger trustworthy — staff can view it but not erase history.
+app.delete('/api/payments/:id', requireAuth, requireOwner, (req, res) => {
+    db.prepare('DELETE FROM payments WHERE id = ?').run(req.params.id);
+    res.json({ ok: true });
+});
+
 // ---------- 1) eSewa ----------
 // eSewa v2 works by redirecting the browser to eSewa with a signed form.
 app.post('/api/payments/esewa/initiate', (req, res) => {
