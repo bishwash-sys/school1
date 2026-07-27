@@ -60,17 +60,18 @@ Like the admin panel, the student side is now separate pages instead of one long
 ```
 student-dashboard.html   Overview (welcome + quick counts + links)
 student-homework.html    Full homework list
-student-groups.html      QR code, scanning, contacts, and group creation
+student-groups.html      My UID, friend search, and group creation
 student-chat.html        An individual group's chat room
 ```
-All share one top nav bar (`js/student-common.js`) with Dashboard / Homework / Study Groups links plus Pay Fees and Logout, always visible.
+All share one top nav bar (`js/student-common.js`) with Dashboard / Homework / Notices / Study Groups links plus Pay Fees and Logout, always visible.
 
-## Student QR Chat Groups
-Students can add classmates as contacts by scanning each other's personal QR code, then form group chats with confirmed contacts.
+## Student Friends & Group Chat (UID-based)
+Each student has a unique 6-digit **UID**, shown on their Study Groups page. Students add each other as friends by searching for that UID (no camera or QR code needed — works on any device), then form group chats with confirmed friends.
 
-- Every student has a unique QR code (on their dashboard) encoding a private "contact code."
-- Scanning a classmate's QR (using the device camera) adds them as a mutual contact.
-- Group chats can only include students who are already confirmed contacts — there's no way to add a stranger who hasn't been scanned.
+- Every student account gets a UID automatically when created (also visible to admins in **Student Accounts**, in case a student forgets it).
+- Adding a friend requires knowing their exact UID — there's no public directory or browsing, so a stranger can't just look students up.
+- Friends can be removed at any time from the **My Friends** list.
+- Group chats can only include students who are already confirmed friends — no way to add someone who was never searched/added.
 - **Every group and every message is visible to admins** under **Student Chats** in the dashboard, for moderation and safety. This is a supervised system, not a private/hidden one — worth mentioning to students and parents.
 - Messages refresh automatically every few seconds (no separate chat server needed).
 

@@ -1,112 +1,125 @@
-// ---------- My QR code ----------
-fetch('/api/student/my-qr', { headers: studentAuthHeaders() })
-    .then(r => r.json())
-    .then(data => { document.getElementById('my-qr-img').src = data.qrDataUrl; })
+// ---------- My UID ----------
+studentApiRequest('/api/student/my-uid')
+    .then(data => { document.getElementById('my-uid-display').textContent = data.uid; })
     .catch(() => {});
 
-// ---------- QR scanning (camera) ----------
-let scanStream = null;
-let scanning = false;
+// ---------- Search for a friend by UID ----------
+const searchInput = document.getElementById('uid-search-input');
+const searchStatus = document.getElementById('search-status');
+const searchResultBox = document.getElementById('search-result');
 
-const startScanBtn = document.getElementById('start-scan-btn');
-const stopScanBtn = document.getElementById('stop-scan-btn');
-const scannerWrap = document.getElementById('scanner-wrap');
-const scanStatus = document.getElementById('scan-status');
-const video = document.getElementById('scanner-video');
+document.getElementById('uid-search-btn').addEventListener('click', doSearch);
+searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
 
-startScanBtn.addEventListener('click', async () => {
-    try {
-        scanStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment', width: { ideal: 720 }, height: { ideal: 720 } }
-        });
-        video.srcObject = scanStream;
-        video.play();
-        scannerWrap.style.display = 'block';
-        scanStatus.textContent = 'Point your camera at your classmate\'s QR code...';
-        scanning = true;
-        requestAnimationFrame(tickScan);
-    } catch (err) {
-        scanStatus.textContent = 'Could not access camera: ' + err.message;
+function doSearch() {
+    const uid = searchInput.value.trim();
+    searchResultBox.innerHTML = '';
+    searchStatus.textContent = '';
+    if (!uid) {
+        searchStatus.textContent = 'Enter a UID first.';
+        return;
     }
-});
 
-stopScanBtn.addEventListener('click', stopScanning);
-
-function stopScanning() {
-    scanning = false;
-    if (scanStream) {
-        scanStream.getTracks().forEach(t => t.stop());
-        scanStream = null;
-    }
-    scannerWrap.style.display = 'none';
+    studentApiRequest('/api/student/search?uid=' + encodeURIComponent(uid))
+        .then(data => {
+            searchResultBox.innerHTML = `
+                <div class="search-result-card">
+                    <div style="display:flex; align-items:center; gap:.7rem;">
+                        <div class="friend-avatar">${initials(data.name)}</div>
+                        <div>
+                            <div class="friend-name">${data.name}</div>
+                            ${data.class ? `<div class="friend-class">${data.class}</div>` : ''}
+                        </div>
+                    </div>
+                    ${data.alreadyFriends
+                        ? '<span style="color:#8a9084; font-size:.85rem;">Already friends</span>'
+                        : `<button class="btn" id="add-friend-btn" style="padding:.4rem 1rem; font-size:.85rem;">Add Friend</button>`}
+                </div>
+            `;
+            const addBtn = document.getElementById('add-friend-btn');
+            if (addBtn) {
+                addBtn.addEventListener('click', () => addFriend(uid, data.name));
+            }
+        })
+        .catch(err => { searchStatus.textContent = err.message; });
 }
 
-const scanCanvas = document.createElement('canvas');
-const scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
-const SCAN_MAX_DIM = 480;
-
-function tickScan() {
-    if (!scanning) return;
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        const vw = video.videoWidth, vh = video.videoHeight;
-        const scale = Math.min(1, SCAN_MAX_DIM / Math.max(vw, vh));
-        scanCanvas.width = Math.round(vw * scale);
-        scanCanvas.height = Math.round(vh * scale);
-        scanCtx.drawImage(video, 0, 0, scanCanvas.width, scanCanvas.height);
-        const imageData = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
-        const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-        if (code && code.data) {
-            stopScanning();
-            addContactByCode(code.data);
-            return;
-        }
-    }
-    requestAnimationFrame(tickScan);
-}
-
-function addContactByCode(contactCode) {
-    scanStatus.textContent = 'Adding contact...';
-    fetch('/api/student/contacts/add', {
+function addFriend(uid, name) {
+    studentApiRequest('/api/student/contacts/add', {
         method: 'POST',
-        headers: studentAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ contact_code: contactCode })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid })
     })
-    .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error || 'Could not add contact.');
-        return data;
+    .then(() => {
+        searchStatus.textContent = `Added ${name} as a friend!`;
+        searchResultBox.innerHTML = '';
+        searchInput.value = '';
+        loadFriends();
     })
-    .then((data) => {
-        scanStatus.textContent = `Added ${data.addedContact.name} as a contact!`;
-        loadContacts();
-    })
-    .catch(err => { scanStatus.textContent = err.message; });
+    .catch(err => { searchStatus.textContent = err.message; });
 }
 
-// ---------- Contacts + group creation ----------
-function loadContacts() {
+// ---------- Friends list ----------
+function initials(name) {
+    return (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+}
+
+function loadFriends() {
     studentApiRequest('/api/student/contacts')
-        .then(contacts => {
-            const box = document.getElementById('contacts-checklist');
-            if (!contacts.length) {
-                box.innerHTML = '<p style="color:#8a9084; font-size:.88rem;">No contacts yet — scan a classmate\'s QR code first.</p>';
+        .then(friends => {
+            const box = document.getElementById('friends-list');
+            const checklist = document.getElementById('contacts-checklist');
+
+            if (!friends.length) {
+                box.innerHTML = '<p style="color:#8a9084; font-size:.9rem;">No friends yet — search their UID above to add one.</p>';
+                checklist.innerHTML = '<p style="color:#8a9084; font-size:.88rem;">No friends yet.</p>';
                 return;
             }
-            box.innerHTML = contacts.map(c => `
-                <label style="display:flex; align-items:center; gap:.5rem; margin-bottom:.4rem; font-size:.9rem;">
-                    <input type="checkbox" value="${c.username}" class="contact-check">
-                    ${c.student_name} ${c.class ? '(' + c.class + ')' : ''}
-                </label>
+
+            box.innerHTML = friends.map(f => `
+                <div class="friend-row">
+                    <div class="friend-avatar">${initials(f.student_name)}</div>
+                    <div class="friend-info">
+                        <div class="friend-name">${f.student_name}</div>
+                        ${f.class ? `<div class="friend-class">${f.class}</div>` : ''}
+                    </div>
+                    <button class="remove-friend-btn" data-username="${f.username}">Remove</button>
+                </div>
             `).join('');
+            box.querySelectorAll('.remove-friend-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (!confirm('Remove this friend?')) return;
+                    studentApiRequest('/api/student/contacts/' + encodeURIComponent(btn.dataset.username), { method: 'DELETE' })
+                        .then(() => loadFriends())
+                        .catch(err => alert(err.message));
+                });
+            });
+
+            checklist.innerHTML = `<div class="friend-select-list">${friends.map(c => `
+                <label class="friend-select-row">
+                    <div class="friend-avatar">${initials(c.student_name)}</div>
+                    <div class="friend-info">
+                        <div class="friend-name">${c.student_name}</div>
+                        ${c.class ? `<div class="friend-class">${c.class}</div>` : ''}
+                    </div>
+                    <input type="checkbox" value="${c.username}" class="contact-check">
+                </label>
+            `).join('')}</div>`;
+
+            checklist.querySelectorAll('.friend-select-row').forEach(row => {
+                const checkbox = row.querySelector('input');
+                checkbox.addEventListener('change', () => row.classList.toggle('checked', checkbox.checked));
+            });
         }).catch(() => {});
 }
-loadContacts();
+loadFriends();
 
+// ---------- Create a group chat ----------
 document.getElementById('create-group-btn').addEventListener('click', () => {
     const name = document.getElementById('group-name-input').value.trim();
     const members = Array.from(document.querySelectorAll('.contact-check:checked')).map(el => el.value);
     if (!name) return alert('Please enter a group name.');
-    if (!members.length) return alert('Select at least one classmate.');
+    if (!members.length) return alert('Select at least one friend.');
 
     studentApiRequest('/api/student/chat-groups', {
         method: 'POST',

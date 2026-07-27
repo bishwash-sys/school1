@@ -7,6 +7,57 @@
 <title>Study Groups &mdash; Shree Navajagriti Chandi School</title>
 <link rel="stylesheet" href="css/site.css">
 <link rel="stylesheet" href="css/student.css">
+<style>
+    .uid-display {
+        font-family: 'Fraunces', serif;
+        font-size: 2.2rem;
+        font-weight: 700;
+        letter-spacing: .05em;
+        color: var(--forest);
+        background: #eef4ee;
+        border-radius: 8px;
+        padding: .7rem 1rem;
+        margin: .6rem 0;
+    }
+    .search-row { display: flex; gap: .6rem; }
+    .search-row input { flex: 1; }
+    .search-result-card {
+        display: flex; justify-content: space-between; align-items: center;
+        background: #f8f5ec; border-radius: 8px; padding: .9rem 1.1rem; margin-top: 1rem;
+    }
+    .friend-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: .7rem 0; border-bottom: 1px solid var(--line);
+    }
+    .friend-row:last-child { border-bottom: none; }
+    .remove-friend-btn {
+        background: none; border: 1px solid var(--danger); color: var(--danger);
+        padding: .3rem .8rem; border-radius: 6px; font-size: .78rem; cursor: pointer;
+    }
+    .friend-avatar {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: var(--forest); color: #fff; display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: .88rem; flex-shrink: 0; font-family: 'Fraunces', serif;
+    }
+    .friend-row { gap: .8rem; }
+    .friend-info { flex: 1; }
+    .friend-name { font-weight: 600; color: var(--ink); font-size: .92rem; }
+    .friend-class { font-size: .78rem; color: #8a9084; }
+
+    .friend-select-list { display: flex; flex-direction: column; gap: .6rem; }
+    .friend-select-row {
+        display: flex; align-items: center; gap: .8rem;
+        border: 1px solid var(--line); border-radius: 8px;
+        padding: .7rem 1rem; cursor: pointer;
+        transition: border-color .15s, background-color .15s;
+    }
+    .friend-select-row:hover { border-color: var(--marigold); background: #fdf8ee; }
+    .friend-select-row.checked { border-color: var(--forest); background: #eef4ee; }
+    .friend-select-row input[type="checkbox"] {
+        width: auto; margin: 0; accent-color: var(--forest);
+        transform: scale(1.15); cursor: pointer;
+    }
+</style>
 </head>
 <body>
 
@@ -15,30 +66,35 @@
 
     <h2 style="color:var(--forest); font-size:1.3rem; margin-bottom:.4rem;">Study Group Chat</h2>
     <p style="color:#5b6255; font-size:.88rem; margin-bottom:1.4rem;">
-        Add classmates by scanning their QR code, then start a group chat. Chats are visible to school admins for safety.
+        Add classmates as friends by searching their UID, then start a group chat. Chats are visible to school admins for safety.
     </p>
 
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap:1.2rem; margin-bottom:1.5rem;">
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:1.2rem; margin-bottom:1.5rem;">
         <div class="hw-card" style="text-align:center;">
-            <h3 style="margin-bottom:.8rem;">My QR Code</h3>
-            <img id="my-qr-img" src="" alt="Your QR code" style="width:220px; height:220px; margin:0 auto; display:block; background:#fff; padding:8px; border-radius:8px;">
-            <p style="font-size:.8rem; color:#8a9084; margin-top:.6rem;">Let a classmate scan this to add you.</p>
+            <h3 style="margin-bottom:.4rem;">My UID</h3>
+            <p style="font-size:.8rem; color:#8a9084;">Share this number so classmates can add you.</p>
+            <div class="uid-display" id="my-uid-display">------</div>
         </div>
 
         <div class="hw-card">
-            <h3 style="margin-bottom:.8rem;">Add a Classmate</h3>
-            <button class="btn" id="start-scan-btn" type="button">Scan Their QR Code</button>
-            <div id="scanner-wrap" style="display:none; margin-top:1rem;">
-                <video id="scanner-video" style="width:100%; border-radius:8px;" muted playsinline></video>
-                <button class="btn secondary" id="stop-scan-btn" type="button" style="margin-top:.6rem; width:100%;">Cancel Scanning</button>
+            <h3 style="margin-bottom:.8rem;">Add a Friend</h3>
+            <div class="search-row">
+                <input type="text" id="uid-search-input" placeholder="Enter a 6-digit UID" maxlength="6" inputmode="numeric">
+                <button class="btn" id="uid-search-btn" type="button">Search</button>
             </div>
-            <p id="scan-status" style="font-size:.85rem; margin-top:.6rem; color:#5b6255;"></p>
+            <div id="search-result"></div>
+            <p id="search-status" style="font-size:.85rem; margin-top:.6rem; color:#5b6255;"></p>
         </div>
+    </div>
+
+    <div class="hw-card" style="margin-bottom:1.5rem;">
+        <h3 style="margin-bottom:.8rem;">My Friends</h3>
+        <div id="friends-list"></div>
     </div>
 
     <div class="hw-card">
         <h3 style="margin-bottom:.8rem;">Create a Group Chat</h3>
-        <p style="font-size:.85rem; color:#8a9084; margin-bottom:.6rem;">Select from classmates you've added as contacts.</p>
+        <p style="font-size:.85rem; color:#8a9084; margin-bottom:.6rem;">Select from friends you've added.</p>
         <div id="contacts-checklist" style="margin-bottom:1rem;"></div>
         <div class="form-group" style="margin-bottom:.8rem;">
             <input type="text" id="group-name-input" placeholder="Group name (e.g. Class 10 Study Group)">
@@ -50,7 +106,6 @@
     <div id="groups-list"></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
 <script src="js/student-common.js"></script>
 <script>renderStudentShell('groups');</script>
 <script src="js/student-groups.js"></script>

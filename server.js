@@ -24,7 +24,6 @@ const KHALTI_SECRET_KEY = process.env.KHALTI_SECRET_KEY || ''; // you must get y
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || ''; // you must get your own test key from dashboard.stripe.com
 const stripe = STRIPE_SECRET_KEY ? require('stripe')(STRIPE_SECRET_KEY) : null;
-const QRCode = require('qrcode');
 
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
@@ -172,15 +171,24 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 );
 `);
 
-// Migration: add a QR "contact code" column to existing student_logins tables
-const studentCols = db.prepare("PRAGMA table_info(student_logins)").all().map(c => c.name);
-if (!studentCols.includes('contact_code')) {
-    db.exec('ALTER TABLE student_logins ADD COLUMN contact_code TEXT');
+// Helper: generate a unique 6-digit student UID (used for friend search, not for login)
+function generateStudentUid() {
+    let uid;
+    do {
+        uid = String(Math.floor(100000 + Math.random() * 900000));
+    } while (db.prepare('SELECT id FROM student_logins WHERE uid = ?').get(uid));
+    return uid;
 }
-// Backfill a contact code for any student that doesn't have one yet
-const noCode = db.prepare("SELECT id FROM student_logins WHERE contact_code IS NULL OR contact_code = ''").all();
-for (const s of noCode) {
-    db.prepare('UPDATE student_logins SET contact_code = ? WHERE id = ?').run(crypto.randomBytes(16).toString('hex'), s.id);
+
+// Migration: add a UID column to existing student_logins tables (replaces the old QR contact_code)
+const studentCols = db.prepare("PRAGMA table_info(student_logins)").all().map(c => c.name);
+if (!studentCols.includes('uid')) {
+    db.exec('ALTER TABLE student_logins ADD COLUMN uid TEXT');
+}
+// Backfill a UID for any student that doesn't have one yet
+const noUid = db.prepare("SELECT id FROM student_logins WHERE uid IS NULL OR uid = ''").all();
+for (const s of noUid) {
+    db.prepare('UPDATE student_logins SET uid = ? WHERE id = ?').run(generateStudentUid(), s.id);
 }
 
 // Seed a default admission status if not already set
@@ -314,22 +322,18 @@ app.get('/api/student/me', requireStudentAuth, (req, res) => {
 });
 
 // ==========================================================
-// STUDENT CHAT — QR-based contacts + group chat
-// Safety notes: contacts can only be added between two real, admin-created student
-// accounts (no open signup, no strangers). Every group and message is visible to
+// STUDENT FRIENDS — search by UID, add/remove + group chat
+// Safety notes: friends can only be added between two real, admin-created student
+// accounts (no open signup, no strangers, no public directory browsing — a student
+// must already know the other student's UID). Every group and message is visible to
 // school admins for moderation — this is not a private/hidden channel.
 // ==========================================================
 
-// A student's own QR code, encoding their private contact code
-app.get('/api/student/my-qr', requireStudentAuth, async (req, res) => {
-    const row = db.prepare('SELECT contact_code FROM student_logins WHERE username = ?').get(req.student.username);
+// The logged-in student's own UID, shown on their dashboard so friends can find them
+app.get('/api/student/my-uid', requireStudentAuth, (req, res) => {
+    const row = db.prepare('SELECT uid FROM student_logins WHERE username = ?').get(req.student.username);
     if (!row) return res.status(404).json({ error: 'Account not found.' });
-    try {
-        const qrDataUrl = await QRCode.toDataURL(row.contact_code, { width: 320, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#000000', light: '#ffffff' } });
-        res.json({ contactCode: row.contact_code, qrDataUrl });
-    } catch (err) {
-        res.status(500).json({ error: 'Could not generate QR code.' });
-    }
+    res.json({ uid: row.uid });
 });
 
 function contactPairKey(a, b) {
@@ -337,15 +341,32 @@ function contactPairKey(a, b) {
     return [a, b].sort();
 }
 
-// Add a contact after scanning someone else's QR code
-app.post('/api/student/contacts/add', requireStudentAuth, (req, res) => {
-    const { contact_code } = req.body || {};
-    if (!contact_code) return res.status(400).json({ error: 'Missing QR code data.' });
+// Search for another student by their UID (does not reveal anything unless the exact UID matches)
+app.get('/api/student/search', requireStudentAuth, (req, res) => {
+    const uid = (req.query.uid || '').trim();
+    if (!uid) return res.status(400).json({ error: 'Enter a UID to search.' });
 
-    const other = db.prepare('SELECT * FROM student_logins WHERE contact_code = ?').get(contact_code);
-    if (!other) return res.status(404).json({ error: 'That QR code is not recognized.' });
+    const other = db.prepare('SELECT username, student_name, class, uid FROM student_logins WHERE uid = ?').get(uid);
+    if (!other) return res.status(404).json({ error: 'No student found with that UID.' });
     if (other.username === req.student.username) {
-        return res.status(400).json({ error: "You can't add yourself as a contact." });
+        return res.status(400).json({ error: 'That\'s your own UID.' });
+    }
+
+    const [a, b] = contactPairKey(req.student.username, other.username);
+    const alreadyFriends = !!db.prepare('SELECT id FROM student_contacts WHERE student_a = ? AND student_b = ?').get(a, b);
+
+    res.json({ username: other.username, name: other.student_name, class: other.class, uid: other.uid, alreadyFriends });
+});
+
+// Add a friend by UID
+app.post('/api/student/contacts/add', requireStudentAuth, (req, res) => {
+    const uid = (req.body && req.body.uid || '').trim();
+    if (!uid) return res.status(400).json({ error: 'Missing UID.' });
+
+    const other = db.prepare('SELECT * FROM student_logins WHERE uid = ?').get(uid);
+    if (!other) return res.status(404).json({ error: 'No student found with that UID.' });
+    if (other.username === req.student.username) {
+        return res.status(400).json({ error: "You can't add yourself as a friend." });
     }
 
     const [a, b] = contactPairKey(req.student.username, other.username);
@@ -354,6 +375,13 @@ app.post('/api/student/contacts/add', requireStudentAuth, (req, res) => {
         db.prepare('INSERT INTO student_contacts (student_a, student_b) VALUES (?,?)').run(a, b);
     }
     res.status(201).json({ ok: true, addedContact: { username: other.username, name: other.student_name, class: other.class } });
+});
+
+// Remove a friend
+app.delete('/api/student/contacts/:username', requireStudentAuth, (req, res) => {
+    const [a, b] = contactPairKey(req.student.username, req.params.username);
+    db.prepare('DELETE FROM student_contacts WHERE student_a = ? AND student_b = ?').run(a, b);
+    res.json({ ok: true });
 });
 
 // List this student's contacts
@@ -612,7 +640,7 @@ registerCrud('homework', 'homework', ['class', 'subject', 'title', 'description'
 
 // ---------- Student account management (any logged-in admin/staff can do this) ----------
 app.get('/api/student-accounts', requireAuth, (req, res) => {
-    const rows = db.prepare('SELECT id, username, student_name, class, email FROM student_logins ORDER BY id DESC').all();
+    const rows = db.prepare('SELECT id, username, student_name, class, email, uid FROM student_logins ORDER BY id DESC').all();
     res.json(rows);
 });
 
@@ -628,10 +656,10 @@ app.post('/api/student-accounts', requireAuth, (req, res) => {
     if (existing) return res.status(409).json({ error: 'That username is already taken.' });
 
     const hash = bcrypt.hashSync(password, 10);
-    const contactCode = crypto.randomBytes(16).toString('hex');
-    const info = db.prepare('INSERT INTO student_logins (username, password_hash, student_name, class, email, contact_code) VALUES (?,?,?,?,?,?)')
-        .run(username, hash, student_name, className || '', email || '', contactCode);
-    const row = db.prepare('SELECT id, username, student_name, class, email FROM student_logins WHERE id = ?').get(info.lastInsertRowid);
+    const uid = generateStudentUid();
+    const info = db.prepare('INSERT INTO student_logins (username, password_hash, student_name, class, email, uid) VALUES (?,?,?,?,?,?)')
+        .run(username, hash, student_name, className || '', email || '', uid);
+    const row = db.prepare('SELECT id, username, student_name, class, email, uid FROM student_logins WHERE id = ?').get(info.lastInsertRowid);
     res.status(201).json(row);
 });
 
